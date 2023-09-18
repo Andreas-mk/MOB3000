@@ -1,4 +1,17 @@
 <resources>
     <string name="app_name">Smilefjesapp</string>
     <string name="title_activity_kommune">KommuneActivity</string>
+    <string-array name="kommuner">
+        <item>Nord Aurdal</item>
+        <item>Fredrikstad</item>
+        <item>Stavanger</item>
+        <item>Molde</item>
+        <item>Sør Aurdal</item>
+        <item>Etnedal</item>
+        <item>Sarpsborg</item>
+        <item>Midt-Telemark</item>
+        <item>Halden</item>
+        <item>Notodden</item>
+        <item>Ringerike</item>
+    </string-array>
 </resources>
