@@ -26,6 +26,7 @@ import mob.smilefjesapp.ui.theme.SmilefjesappTheme
 
 class KommuneActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        // test
         val kommuneTabell  = resources.getStringArray(R.array.kommuner).asList()
         super.onCreate(savedInstanceState)
         setContent {
