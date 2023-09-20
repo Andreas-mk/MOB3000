@@ -14,4 +14,16 @@
         <item>Notodden</item>
         <item>Ringerike</item>
     </string-array>
+    <string-array name = "fylker">
+        <item>Rogaland</item>
+        <item>Viken</item>
+        <item>Nordland</item>
+        <item>Vestfold og Telemark</item>
+        <item>Agder</item>
+        <item>Trøndelag</item>
+        <item>Innlandet</item>
+        <item>Møre og Romsdal</item>
+        <item>Troms og Finnmark</item>
+        <item>Vestlandet</item>
+    </string-array>
 </resources>
