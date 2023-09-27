@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
@@ -102,6 +103,7 @@ fun FylkeListe(fylkeTabell: List<String>, modifier: Modifier = Modifier){
                 Modifier
                     .fillMaxWidth()
                     .padding(2.dp)
+                    .clip(MaterialTheme.shapes.small)
             )
             Divider(
                 color = Color.Black,
@@ -134,6 +136,8 @@ fun ToppAppBar(modifier: Modifier = Modifier) {
                             contentDescription = "Tilbake")
                     }
         },
+        /* Trenger kanskje ikke å søke på fylker fordi det er så få fylker i Norge
+        * Fjern helt????*/
         actions = {
             IconButton(onClick = { /* Noe inni her*/}) {
                 Icon(imageVector = Icons.Filled.Search,

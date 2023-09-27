@@ -120,7 +120,7 @@ fun KommuneListe(kommuneTabell: List<String>, modifier: Modifier = Modifier) {
         }
     }
 }
-
+/*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopAppBar(modifier: Modifier = Modifier){
@@ -152,6 +152,8 @@ fun TopAppBar(modifier: Modifier = Modifier){
         modifier = modifier
     )
 }
+*/
+
 /*
 @Preview(showBackground = true)
 @Composable
