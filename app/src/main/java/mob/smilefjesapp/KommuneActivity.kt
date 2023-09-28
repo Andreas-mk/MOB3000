@@ -62,7 +62,7 @@ class KommuneActivity : ComponentActivity() {
 fun KommuneSiden(kommuneTabell: List<String>, modifier: Modifier = Modifier){
     // Fra powerpoint
     // Lager layoutet på kommunesiden
-    Scaffold (topBar = {TopAppBar()}
+    Scaffold (topBar = {TopAppBarKommune()}
     ) {
         Column(
             modifier = Modifier
@@ -120,10 +120,10 @@ fun KommuneListe(kommuneTabell: List<String>, modifier: Modifier = Modifier) {
         }
     }
 }
-/*
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopAppBar(modifier: Modifier = Modifier){
+fun TopAppBarKommune(modifier: Modifier = Modifier){
     val localContext = LocalContext.current
     // Top App Bar for enkel oversikt og navigasjon
     CenterAlignedTopAppBar(
@@ -152,7 +152,7 @@ fun TopAppBar(modifier: Modifier = Modifier){
         modifier = modifier
     )
 }
-*/
+
 
 /*
 @Preview(showBackground = true)
