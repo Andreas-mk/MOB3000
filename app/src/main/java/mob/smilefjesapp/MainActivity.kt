@@ -37,6 +37,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,6 +58,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.google.android.material.search.SearchBar
+import mob.smilefjesapp.ui.theme.Hvit
+import mob.smilefjesapp.ui.theme.Lys
 import mob.smilefjesapp.ui.theme.SmilefjesappTheme
 
 class MainActivity : ComponentActivity() {
@@ -145,6 +148,8 @@ fun Start(modifier: Modifier = Modifier) {
                 value = text,
                 onValueChange = { text = it },
                 label = { Text("Restaurantsøk") }
+                //colors = ContainerColor.toColor() // Bakgrunnsfarge for søkeboksen (funker ikke)
+                //containerColor: Color = FilledTextFieldTokens.ContainerColor.toColor(),
             )
             Button(
                 modifier = Modifier
@@ -177,6 +182,8 @@ fun TopAppBar(modifier: Modifier = Modifier){
                 maxLines = 1
             )
         },
+        // Fjerner TopAppBars hvite bakgrunn
+        colors = TopAppBarDefaults.smallTopAppBarColors(containerColor = Color.Transparent),
         modifier = modifier
     )
 }

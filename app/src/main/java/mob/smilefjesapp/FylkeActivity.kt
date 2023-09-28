@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,8 +67,8 @@ fun FylkeSiden(fylkeTabell: List<String>, modifier: Modifier = Modifier) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(it)
-                .background(Color.LightGray),
+                .padding(it),
+                //.background(Color.LightGray),
             horizontalAlignment = Alignment.CenterHorizontally
         )
         {
@@ -95,7 +96,7 @@ fun FylkeListe(fylkeTabell: List<String>, modifier: Modifier = Modifier){
                     )
                      */
                     .fillMaxWidth(),
-                color = Color.Blue,
+                //color = Color.Blue,
                 fontSize = 28.sp,
                 maxLines = 1
             )
@@ -144,6 +145,8 @@ fun ToppAppBar(modifier: Modifier = Modifier) {
                     contentDescription = "Søk"
                 ) }
         },
+        // Fjerner TopAppBars hvite bakgrunn
+        colors = TopAppBarDefaults.smallTopAppBarColors(containerColor = Color.Transparent),
         modifier = modifier
     )
 }

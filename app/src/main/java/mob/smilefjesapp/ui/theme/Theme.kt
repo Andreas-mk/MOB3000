@@ -22,9 +22,17 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
+    primary = Midten,
+    secondary = Mørkest,
+    tertiary = Lys,
+    background = Hvit
+
+    /*
+    Default-verdier
     primary = Purple40,
     secondary = PurpleGrey40,
     tertiary = Pink40
+    */
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
@@ -41,7 +49,7 @@ private val LightColorScheme = lightColorScheme(
 fun SmilefjesappTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false, // Settes denne til true brukes enhetens default farger
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
