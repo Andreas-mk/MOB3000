@@ -111,7 +111,8 @@ fun Start(modifier: Modifier = Modifier) {
             )
             Button(
                 modifier = Modifier
-                    .padding(5.dp),
+                    .padding(5.dp)
+                    .size(250.dp, 65.dp),
                 onClick = {
                     localContext.startActivity(Intent(localContext, FylkeActivity::class.java))
                 }
