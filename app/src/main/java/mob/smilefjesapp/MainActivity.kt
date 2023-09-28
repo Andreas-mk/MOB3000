@@ -94,10 +94,10 @@ fun Start(modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally
 
         ) {
-            /*Image(
+            Image(
                 painter = painterResource(id = R.drawable.smilefjes),
-                contentDescription = "Smilefjes-logo")
-            )*/
+                contentDescription = ("Smilefjes-logo")
+            )
             Divider(
                 color = Color.Black,
                 modifier = Modifier
@@ -169,7 +169,7 @@ fun TopAppBar(modifier: Modifier = Modifier){
     // Top App Bar for enkel oversikt og navigasjon
     CenterAlignedTopAppBar(
         title = {
-            Text( text = "Smilefjes",
+            Text( text = "Smilefjesappen",
                 modifier = Modifier.fillMaxWidth(),
                 style=MaterialTheme.typography.headlineLarge,
                 textAlign = TextAlign.Center,
