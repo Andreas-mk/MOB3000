@@ -137,14 +137,6 @@ fun ToppAppBar(modifier: Modifier = Modifier) {
                             contentDescription = "Tilbake")
                     }
         },
-        /* Trenger kanskje ikke å søke på fylker fordi det er så få fylker i Norge
-        * Fjern helt????*/
-        actions = {
-            IconButton(onClick = { /* Noe inni her*/}) {
-                Icon(imageVector = Icons.Filled.Search,
-                    contentDescription = "Søk"
-                ) }
-        },
         // Fjerner TopAppBars hvite bakgrunn
         colors = TopAppBarDefaults.smallTopAppBarColors(containerColor = Color.Transparent),
         modifier = modifier

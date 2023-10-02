@@ -165,6 +165,19 @@ fun Start(modifier: Modifier = Modifier) {
                     style = MaterialTheme.typography.headlineMedium
                 )
             }
+            Button(
+                modifier = Modifier
+                    .padding(5.dp)
+                    .size(250.dp, 65.dp),
+                onClick = {
+                    localContext.startActivity(Intent(localContext, RestaurantInfoActivity::class.java))
+                }
+            ) {
+                Text(
+                    text = "Restaurant info",
+                    style = MaterialTheme.typography.headlineMedium
+                )
+            }
         }
     }
 }

@@ -14,7 +14,7 @@
         <item>Notodden</item>
         <item>Ringerike</item>
     </string-array>
-    <string-array name = "fylker">
+    <string-array name="fylker">
         <item>Rogaland</item>
         <item>Viken</item>
         <item>Nordland</item>
@@ -26,4 +26,5 @@
         <item>Troms og Finnmark</item>
         <item>Vestlandet</item>
     </string-array>
+    <string name="title_activity_restaurant_info">RestaurantInfoActivity</string>
 </resources>
