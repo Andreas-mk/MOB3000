@@ -27,4 +27,5 @@
         <item>Vestlandet</item>
     </string-array>
     <string name="title_activity_restaurant_info">RestaurantInfoActivity</string>
+    <string name="title_activity_favoritter">FavoritterActivity</string>
 </resources>

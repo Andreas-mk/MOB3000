@@ -7,13 +7,20 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -71,16 +78,20 @@ Scaffold (topBar = {TopAppBarInfoCard()}
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(it),
+                .padding(it)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         )
         {
-            InfoCard(/*Restaurant liste?*/)
+            InfoCard("Nellys Kebab", "1601", "Fredrikstad")
+            InfoCard("Stasjonsbua", "3801", "Bø i Telemark")
+            InfoCard("Aasmundsen Bakeri", "3800", "Bø i Telemark")
         }
     }
 }
 @Composable
-fun InfoCard(/*context: Context,*/ modifier: Modifier = Modifier) {
+fun InfoCard(navn : String, postnr : String, stedsnavn : String,/*context: Context,*/ modifier: Modifier = Modifier) {
+    var expanded by remember { mutableStateOf(false) }
     OutlinedCard(
         modifier= modifier
             .fillMaxWidth()
@@ -88,11 +99,13 @@ fun InfoCard(/*context: Context,*/ modifier: Modifier = Modifier) {
             .clickable(
                 true,
                 onClick = {
+                    expanded = !expanded
                     /* Gjør kortet større, vis MerInfo*/
+
                 }
             )
     ) {
-        var expanded by remember { mutableStateOf(false) }
+       // var expanded by remember { mutableStateOf(false) }
         Column(
             modifier= modifier
                 .background(MaterialTheme.colorScheme.primary)
@@ -104,13 +117,13 @@ fun InfoCard(/*context: Context,*/ modifier: Modifier = Modifier) {
                 // Kolonner med Restaurant-navn, beliggenhet og smilefjesranking
                 Column {
                     Text(
-                        text = "Nellys Kebab",
+                        text = navn,
                         modifier = Modifier.padding(5.dp),
                         color = MaterialTheme.colorScheme.background,
                         style = MaterialTheme.typography.headlineLarge
                     )
                     Text(
-                        text = "1607, Fredrikstad",
+                        text = "$postnr, $stedsnavn",
                         modifier = Modifier.padding(5.dp),
                         color = Color.White,
                         style = MaterialTheme.typography.headlineMedium
@@ -122,20 +135,30 @@ fun InfoCard(/*context: Context,*/ modifier: Modifier = Modifier) {
                 ){
 
                     Image(
-                            painter = painterResource(id = R.drawable.grnn),
-                            //modifier = Modifier.size(400.dp),
+                        painter = painterResource(id = R.drawable.grnn),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentWidth(Alignment.End)
+                            .padding(10.dp),
 
-                            contentDescription = ("Grønn Smilefjes")
-                         )
+                        contentDescription = ("Grønn Smilefjes")
+                    )
                 }
-                Spacer(modifier = Modifier.weight(1f))
+
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(25.dp),
+                horizontalArrangement = Arrangement.Center
+            ){
                 UtvidButton(
                     expanded = expanded,
-                    onClick = { expanded = !expanded }
+                    //onClick = { expanded = !expanded }
                 )
             }
             if (expanded) {
-                MerInfo(
+                UtvidInfo(
                     modifier = Modifier.padding(
                         start = 16.dp,
                         top = 8.dp,
@@ -151,11 +174,11 @@ fun InfoCard(/*context: Context,*/ modifier: Modifier = Modifier) {
 @Composable
 private fun UtvidButton(
     expanded: Boolean,
-    onClick: () -> Unit,
+    //onClick: () -> Unit,
     modifier: Modifier = Modifier
 ){
     IconButton(
-        onClick = onClick,
+        onClick = { /*???*/ },
         modifier = modifier
     ) {
         Icon(
@@ -169,7 +192,7 @@ private fun UtvidButton(
 }
 
 @Composable
-fun MerInfo(
+fun UtvidInfo(
     //restaurant: Restaurant,
     modifier: Modifier = Modifier
 ) {
@@ -178,7 +201,7 @@ fun MerInfo(
     * Vis favorittside? I burgermeny?
     * */
     Column(
-        modifier=Modifier
+        modifier= Modifier
             .padding(5.dp)
             .fillMaxWidth()
     )
@@ -204,28 +227,32 @@ fun MerInfo(
         }
 
         Text(
-            text = "Rutiner og ledelse:"/*${restaurant.rating.toString()}*/,
+            text = "Rutiner og ledelse: 1"/*${restaurant.rating.toString()}*/,
             modifier = Modifier.padding(5.dp),
             color = Color.White,
             style = MaterialTheme.typography.bodyMedium
         )
         Text(
-            text = "Lokaler og utstyr:",
-            modifier = Modifier.padding(5.dp).fillMaxWidth(),
+            text = "Lokaler og utstyr: 0",
+            modifier = Modifier
+                .padding(5.dp)
+                .fillMaxWidth(),
             color = Color.White,
             style = MaterialTheme.typography.bodyMedium
         )
 
 
         Text(
-            text = "Mat-håndtering og tilberedning:",
+            text = "Mat-håndtering og tilberedning: 1",
             modifier = Modifier.padding(5.dp),
             color = Color.White,
             style = MaterialTheme.typography.bodyMedium
         )
         Text(
-            text = "Merking og sporbarhet: ",
-            modifier = Modifier.padding(5.dp).fillMaxWidth(),
+            text = "Merking og sporbarhet: 2",
+            modifier = Modifier
+                .padding(5.dp)
+                .fillMaxWidth(),
             color = Color.White,
             style = MaterialTheme.typography.bodyMedium
         )
@@ -241,7 +268,7 @@ fun TopAppBarInfoCard(modifier: Modifier = Modifier){
     // Top App Bar for enkel oversikt og navigasjon
     CenterAlignedTopAppBar(
         title = {
-            Text( text = "Smilefjesappen",
+            Text( text = "Restauranter",
                 modifier = Modifier.fillMaxWidth(),
                 style=MaterialTheme.typography.headlineLarge,
                 textAlign = TextAlign.Center,

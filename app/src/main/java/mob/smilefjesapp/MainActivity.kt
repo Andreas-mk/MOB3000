@@ -14,11 +14,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
@@ -93,7 +96,8 @@ fun Start(modifier: Modifier = Modifier) {
         Column(
             modifier = Modifier
                 //.fillMaxSize()
-                .padding(it),
+                .padding(it)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
 
         ) {
@@ -102,10 +106,10 @@ fun Start(modifier: Modifier = Modifier) {
                 contentDescription = ("Smilefjes-logo")
             )
             Divider(
-                color = Color.Black,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .width(1.dp)
+                    .height(3.dp)
             )
             Spacer(
                 Modifier
@@ -115,7 +119,7 @@ fun Start(modifier: Modifier = Modifier) {
             Button(
                 modifier = Modifier
                     .padding(5.dp)
-                    .size(250.dp, 65.dp),
+                    .size(270.dp, 65.dp),
                 onClick = {
                     localContext.startActivity(Intent(localContext, FylkeActivity::class.java))
                 }
@@ -127,8 +131,8 @@ fun Start(modifier: Modifier = Modifier) {
             }
             Button(
                 modifier = Modifier
-                    //.fillMaxSize()
-                    .padding(5.dp),
+                    .padding(5.dp)
+                    .size(270.dp, 65.dp),
                 onClick = {
                     localContext.startActivity(Intent(localContext, KommuneActivity::class.java))
                 }
@@ -153,8 +157,8 @@ fun Start(modifier: Modifier = Modifier) {
             )
             Button(
                 modifier = Modifier
-                    //.fillMaxSize()
-                    .padding(5.dp),
+                    .padding(5.dp)
+                    .size(270.dp, 65.dp),
                 onClick = {
                     //localContext.startActivity(Intent(localContext, KommuneActivity::class.java))
                     // Hent info fra Textfield -> Send rett til info side om riktig restaurant
@@ -168,13 +172,26 @@ fun Start(modifier: Modifier = Modifier) {
             Button(
                 modifier = Modifier
                     .padding(5.dp)
-                    .size(250.dp, 65.dp),
+                    .size(270.dp, 65.dp),
                 onClick = {
                     localContext.startActivity(Intent(localContext, RestaurantInfoActivity::class.java))
                 }
             ) {
                 Text(
                     text = "Restaurant info",
+                    style = MaterialTheme.typography.headlineMedium
+                )
+            }
+            Button(
+                modifier = Modifier
+                    .padding(5.dp)
+                    .size(270.dp, 65.dp),
+                onClick = {
+                    localContext.startActivity(Intent(localContext, FavoritterActivity::class.java))
+                }
+            ) {
+                Text(
+                    text = "Favoritter",
                     style = MaterialTheme.typography.headlineMedium
                 )
             }
