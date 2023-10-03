@@ -3,6 +3,7 @@ package mob.smilefjesapp
 import android.content.Intent
 import android.graphics.drawable.Icon
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -64,6 +65,11 @@ import com.google.android.material.search.SearchBar
 import mob.smilefjesapp.ui.theme.Hvit
 import mob.smilefjesapp.ui.theme.Lys
 import mob.smilefjesapp.ui.theme.SmilefjesappTheme
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
