@@ -102,6 +102,7 @@ fun KommuneListe(kommuneTabell: List<String>, modifier: Modifier = Modifier) {
                     )
                     .fillMaxWidth(),
                 fontSize = 28.sp,
+                color = MaterialTheme.colorScheme.primary,
                 maxLines = 1
             )
             Spacer(
@@ -110,12 +111,11 @@ fun KommuneListe(kommuneTabell: List<String>, modifier: Modifier = Modifier) {
                     .padding(2.dp)
             )
             Divider(
-                color = Color.Black,
+                color = MaterialTheme.colorScheme.secondary,
                 modifier = Modifier
                     .fillMaxWidth()
                     .width(1.dp)
             )
-
         }
     }
 }

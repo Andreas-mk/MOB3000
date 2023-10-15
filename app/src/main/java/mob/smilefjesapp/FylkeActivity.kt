@@ -135,7 +135,7 @@ fun FylkeListe(fylkeTabell: List<Fylke>, modifier: Modifier = Modifier){
                     )
                      */
                     .fillMaxWidth(),
-                //color = Color.Blue,
+                color = MaterialTheme.colorScheme.primary,
                 fontSize = 28.sp,
                 maxLines = 1
             )
@@ -146,7 +146,7 @@ fun FylkeListe(fylkeTabell: List<Fylke>, modifier: Modifier = Modifier){
                     .clip(MaterialTheme.shapes.small)
             )
             Divider(
-                color = Color.Black,
+                color = MaterialTheme.colorScheme.secondary,
                 modifier = Modifier
                     .fillMaxWidth()
                     .width(1.dp)

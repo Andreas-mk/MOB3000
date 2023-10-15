@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
@@ -38,6 +39,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import mob.smilefjesapp.ui.theme.SmilefjesappTheme
 
 class RestaurantInfoActivity : ComponentActivity() {
+    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -64,7 +70,8 @@ class RestaurantInfoActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    RestaurantInfo()
+                    val windowSizeClass = calculateWindowSizeClass(this)
+                    RestaurantInfo(Modifier, windowSizeClass)
                 }
             }
         }
@@ -72,20 +79,71 @@ class RestaurantInfoActivity : ComponentActivity() {
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RestaurantInfo(modifier: Modifier = Modifier){
-Scaffold (topBar = {TopAppBarInfoCard()}
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(it)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
-        )
-        {
-            InfoCard("Nellys Kebab", "1601", "Fredrikstad")
-            InfoCard("Stasjonsbua", "3801", "Bø i Telemark")
-            InfoCard("Aasmundsen Bakeri", "3800", "Bø i Telemark")
+fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeClass){
+    val vinduBredde = windowSizeClass.widthSizeClass
+    Scaffold (topBar = {TopAppBarInfoCard()}
+        ) {
+        when (vinduBredde) {
+            WindowWidthSizeClass.Compact -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(it)
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                )
+                {
+                    InfoCard("Nellys Kebab", "1601", "Fredrikstad")
+                    InfoCard("Stasjonsbua", "3801", "Bø i Telemark")
+                    InfoCard("Aasmundsen Bakeri", "3800", "Bø i Telemark")
+                }
+            }
+            //WindowWidthSizeClass.Medium
+            //WindowWidthSizeClass.Expanded // Trenger vi en til hver eller holder det med liten / stor skjerm?
+            WindowWidthSizeClass.Medium -> {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(it)
+                        .verticalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    repeat(2) { // 2 kort ved siden av hverandre
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        )
+                        {
+                            //("Nellys Kebab", "1601", "Fredrikstad")
+                            InfoCard("Stasjonsbua", "3801", "Bø i Telemark")
+                            //InfoCard("Aasmundsen Bakeri", "3800", "Bø i Telemark")
+                        }
+                    }
+                }
+            }
+
+            WindowWidthSizeClass.Expanded -> {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(it),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    repeat(4) {// 4 kort ved siden av hverandre
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        )
+                        {
+                            InfoCard("Aasmundsen Bakeri", "3800", "Bø i Telemark")
+                        }
+                    }
+                }
+            }
         }
     }
 }
