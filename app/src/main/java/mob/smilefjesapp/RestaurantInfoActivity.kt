@@ -7,18 +7,13 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -52,12 +47,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import mob.smilefjesapp.ui.theme.SmilefjesappTheme
+import android.util.Log
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import mob.smilefjesapp.dataklasse.RestaurantInfo
+import mob.smilefjesapp.nettverk.RestaurantApi
+import retrofit2.HttpException
+import java.io.IOException
 
 class RestaurantInfoActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
@@ -98,8 +101,6 @@ fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeCla
                     InfoCard("Aasmundsen Bakeri", "3800", "Bø i Telemark")
                 }
             }
-            //WindowWidthSizeClass.Medium
-            //WindowWidthSizeClass.Expanded // Trenger vi en til hver eller holder det med liten / stor skjerm?
             WindowWidthSizeClass.Medium -> {
                 Row(
                     modifier = Modifier
@@ -123,7 +124,6 @@ fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeCla
                     }
                 }
             }
-
             WindowWidthSizeClass.Expanded -> {
                 Row(
                     modifier = Modifier
@@ -150,6 +150,7 @@ fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeCla
 @Composable
 fun InfoCard(navn : String, postnr : String, stedsnavn : String,/*context: Context,*/ modifier: Modifier = Modifier) {
     var expanded by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
     OutlinedCard(
         modifier= modifier
             .fillMaxWidth()
@@ -159,6 +160,9 @@ fun InfoCard(navn : String, postnr : String, stedsnavn : String,/*context: Conte
                 onClick = {
                     expanded = !expanded
                     /* Gjør kortet større, vis MerInfo*/
+                    coroutineScope.launch(Dispatchers.IO) {
+                        hentRestauranter() // HUSK CORUTINE!!!!!
+                    }
 
                 }
             )
@@ -170,7 +174,6 @@ fun InfoCard(navn : String, postnr : String, stedsnavn : String,/*context: Conte
                 .fillMaxWidth()
         )
         {
-
             Row {
                 // Kolonner med Restaurant-navn, beliggenhet og smilefjesranking
                 Column {
@@ -191,7 +194,6 @@ fun InfoCard(navn : String, postnr : String, stedsnavn : String,/*context: Conte
                     //modifier = Modifier,
                     //horizontalAlignment = Alignment.CenterHorizontally
                 ){
-
                     Image(
                         painter = painterResource(id = R.drawable.grnn),
                         modifier = Modifier
@@ -202,7 +204,6 @@ fun InfoCard(navn : String, postnr : String, stedsnavn : String,/*context: Conte
                         contentDescription = ("Grønn Smilefjes")
                     )
                 }
-
             }
             Row(
                 modifier = Modifier
@@ -245,7 +246,6 @@ private fun UtvidButton(
             if (expanded) "Lukk" else "Utvid",
             tint = MaterialTheme.colorScheme.tertiary
         )
-
     }
 }
 
@@ -283,7 +283,6 @@ fun UtvidInfo(
             )
 
         }
-
         Text(
             text = "Rutiner og ledelse: 1"/*${restaurant.rating.toString()}*/,
             modifier = Modifier.padding(5.dp),
@@ -298,8 +297,6 @@ fun UtvidInfo(
             color = Color.White,
             style = MaterialTheme.typography.bodyMedium
         )
-
-
         Text(
             text = "Mat-håndtering og tilberedning: 1",
             modifier = Modifier.padding(5.dp),
@@ -314,8 +311,27 @@ fun UtvidInfo(
             color = Color.White,
             style = MaterialTheme.typography.bodyMedium
         )
-
-
+    }
+}
+suspend fun hentRestauranter(){
+    try {
+        val svar = RestaurantApi.retrofitService.getRestauranter()
+        if (svar.isSuccessful) {
+            Log.d("Tomt svar", "Svar fra API er tomt")
+            return
+        }
+        val resultat2 = svar.body()
+        if(!resultat2.isNullOrEmpty()) {
+            Log.d("RESULTATET", resultat2.toString())
+        }else{
+            Log.d("Else", "Den er tom")
+        }
+    } catch (e: IOException) {
+        Log.d("IOException", "Huff :( $e")
+    } catch (e: HttpException) {
+        Log.d("HTTPException", "Å nei :( $e")
+    } catch (e: Exception) {
+        Log.e("Exception", " (Finner ikke relevant JSON Decoding Error): $e")
     }
 }
 
