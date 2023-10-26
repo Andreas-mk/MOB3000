@@ -6,7 +6,14 @@ import kotlinx.serialization.SerialName
 /**
  * Dataklasse med verdiene som hentes fra JSON-data (fra APIet).
  * Dette er all dataen vi presenterer om restaurantene.
+ * Fra APIet får vi et "entries" objekt som inneholder liste med restaurantobjekter.
  */
+
+@Serializable
+data class ApiResponse(
+    val entries: List<RestaurantInfo>
+)
+
 @Serializable
 data class RestaurantInfo(
     val navn: String,

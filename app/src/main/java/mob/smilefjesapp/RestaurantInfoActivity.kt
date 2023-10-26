@@ -313,26 +313,38 @@ fun UtvidInfo(
         )
     }
 }
-suspend fun hentRestauranter(){
+
+/**
+ * Setter i gang API-kallet, sjekker at vi får noe data og printer dataen i logcat
+ * Henter en liste med restauranter (**basert på fylke/kommune/søk, vi må sende med noen parametre her etterhvert**)
+ * og returnerer denne lista hvis vi har fått tak i data, hvis ikke returneres en tom liste
+ */
+suspend fun hentRestauranter(): List<RestaurantInfo>{
     try {
-        val svar = RestaurantApi.retrofitService.getRestauranter()
+        val svar = RestaurantApi.retrofitService.hentRestauranter()
         if (svar.isSuccessful) {
-            Log.d("Tomt svar", "Svar fra API er tomt")
-            return
-        }
-        val resultat2 = svar.body()
-        if(!resultat2.isNullOrEmpty()) {
-            Log.d("RESULTATET", resultat2.toString())
+            val apiSvar = svar.body()
+            Log.d("Svarsjekk", "Svar isSuccessful")
+            if (apiSvar != null) {
+                Log.d("Antall svar", "Antall restauranter: ${apiSvar.entries.size}")
+                for (restaurant in apiSvar.entries) { // Kun for å printe i logcat
+                    Log.d("Svar", "Restaurantnavn: ${restaurant.navn}, Adresse: ${restaurant.adrlinje1}")
+                }
+                return apiSvar.entries // Returnerer lista med restauranter
+            } else {
+                Log.d("apiSvar", "apiSvar er null")
+            }
         }else{
-            Log.d("Else", "Den er tom")
+            Log.d("Error", "Svar fra API er tomt - ${svar.code()}")
         }
     } catch (e: IOException) {
-        Log.d("IOException", "Huff :( $e")
+        Log.d("IOException", "IOException :( $e")
     } catch (e: HttpException) {
-        Log.d("HTTPException", "Å nei :( $e")
+        Log.d("HTTPException", "HTTPException :( $e")
     } catch (e: Exception) {
         Log.e("Exception", " (Finner ikke relevant JSON Decoding Error): $e")
     }
+    return emptyList() // Ikke et suksessfullt API kall, tom liste returneres
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
