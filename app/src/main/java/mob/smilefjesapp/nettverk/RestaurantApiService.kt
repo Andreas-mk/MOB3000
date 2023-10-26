@@ -13,7 +13,7 @@ import retrofit2.http.GET
  */
 
 // Det finnes flere Keys i datasettet vi ikke trenger (feks de samme kategoriene, men på nynorsk), derfor ignorerer vi disse.
-val format = Json {ignoreUnknownKeys = true} // Kilde https://github.com/Kotlin/kotlinx.serialization/blob/master/guide/example/example-json-03.kt APA 7 ???
+val format = Json {ignoreUnknownKeys = true} // Kilde https://github.com/Kotlin/kotlinx.serialization/blob/master/docs/json.md#ignoring-unknown-keys / https://github.com/Kotlin/kotlinx.serialization/blob/master/guide/example/example-json-03.kt APA 7 ???
 private const val BASE_URL = "https://hotell.difi.no/"
 private val retrofit = Retrofit.Builder()
     .addConverterFactory(format.asConverterFactory("application/json".toMediaType()))
