@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,12 +38,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import mob.smilefjesapp.dataklasse.FylkeInfo
+import mob.smilefjesapp.nettverk.FylkeAPI
 import mob.smilefjesapp.ui.theme.SmilefjesappTheme
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import androidx.compose.ui.platform.LocalContext
+
 
 
 class FylkeActivity : ComponentActivity() {
@@ -56,9 +61,9 @@ class FylkeActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val fylkeList = remember { mutableStateOf(listOf<Fylke>()) }
-                    hentAlleFylker(fylkeList)
-                    FylkeSiden(fylkeList.value)
+                    val fylkeInfoList = remember { mutableStateOf(listOf<FylkeInfo>()) }
+                    hentAlleFylker(fylkeInfoList)
+                    FylkeSiden(fylkeInfoList.value)
                 }
                 }
             }
@@ -67,7 +72,7 @@ class FylkeActivity : ComponentActivity() {
 
 // Funksjonen som henter alle fylker via API kall med Retrofit
 // Lager en funksjon BASE_URL som er første del av API, mens resten hentes via FylkeAPI filen og GET request
-    private fun hentAlleFylker(fylkeList: MutableState<List<Fylke>>) {
+    private fun hentAlleFylker(fylkeInfoList: MutableState<List<FylkeInfo>>) {
         val BASE_URL = "https://ws.geonorge.no/"
         val TAG: String = "CHECK_RESPONSE"
 
@@ -80,16 +85,16 @@ class FylkeActivity : ComponentActivity() {
             .create(FylkeAPI::class.java)
 
     // Her kommer funksjoner for onResponse og onFailure for å sjekke om den feiler
-        api.hentFylke().enqueue(object : Callback<List<Fylke>> {
-            override fun onResponse(call: Call<List<Fylke>>, response: Response<List<Fylke>>) {
+        api.hentFylke().enqueue(object : Callback<List<FylkeInfo>> {
+            override fun onResponse(call: Call<List<FylkeInfo>>, response: Response<List<FylkeInfo>>) {
                 if (response.isSuccessful){
                     response.body()?.let {
-                            fylkeList.value = it
+                            fylkeInfoList.value = it
                         }
                     }
                 }
             // Denne gir oss feilmelding og ossen type feilmelding
-            override fun onFailure(call: Call<List<Fylke>>, t: Throwable) {
+            override fun onFailure(call: Call<List<FylkeInfo>>, t: Throwable) {
                 Log.i(TAG, "onFailure: ${t.message}")
             }
         })
@@ -98,8 +103,9 @@ class FylkeActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FylkeSiden(fylkeTabell: List<Fylke>, modifier: Modifier = Modifier) {
+fun FylkeSiden(fylkeInfoTabell: List<FylkeInfo>, modifier: Modifier = Modifier) {
     // Rett fra kommunesiden og powerpoint
+    val sorterFylke = fylkeInfoTabell.sortedBy{it.fylkesnavn}
 
     Scaffold (topBar = {ToppAppBar()}
     ){
@@ -111,29 +117,26 @@ fun FylkeSiden(fylkeTabell: List<Fylke>, modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally
         )
         {
-            FylkeListe(fylkeTabell)
+            FylkeListe(sorterFylke)
         }
     }
 }
 
 @Composable
-fun FylkeListe(fylkeTabell: List<Fylke>, modifier: Modifier = Modifier){
+fun FylkeListe(fylkeInfoTabell: List<FylkeInfo>, modifier: Modifier = Modifier){
     // Rett fra kommuneactivity som er igjen henter fra powerpoint
 
     LazyColumn(
         modifier = modifier
     ) {
         // dadadadada
-        items(fylkeTabell) {fylke ->
+        items(fylkeInfoTabell) { fylke ->
             Text(
                 text = fylke.fylkesnavn,
                 modifier = Modifier
                     .padding(20.dp)
-                    /*.clickable(
-                        enabled = true,
-                        onClick = {/*Skal sende videre men lagde den bare nå*/}
-                    )
-                     */
+                    .clickable{
+                    }
                     .fillMaxWidth(),
                 color = MaterialTheme.colorScheme.primary,
                 fontSize = 28.sp,

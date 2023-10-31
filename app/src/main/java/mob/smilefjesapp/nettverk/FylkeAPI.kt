@@ -1,5 +1,7 @@
-package mob.smilefjesapp
+package mob.smilefjesapp.nettverk
 
+import kotlinx.serialization.Serializable
+import mob.smilefjesapp.dataklasse.FylkeInfo
 import retrofit2.Call
 import retrofit2.http.GET
 
@@ -9,5 +11,5 @@ import retrofit2.http.GET
 interface FylkeAPI {
 
     @GET("kommuneinfo/v1/fylker")
-    fun hentFylke(): Call<List<Fylke>>
+    fun hentFylke(): Call<List<FylkeInfo>>
 }

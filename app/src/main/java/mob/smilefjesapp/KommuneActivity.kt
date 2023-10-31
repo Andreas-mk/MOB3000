@@ -1,12 +1,10 @@
 package mob.smilefjesapp
 
 import android.content.Intent
-import android.graphics.drawable.Icon
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,7 +15,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Divider
@@ -30,79 +27,96 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import mob.smilefjesapp.dataklasse.FylkeInfo
+import mob.smilefjesapp.dataklasse.KommuneInfo
+import mob.smilefjesapp.nettverk.KommuneApiService
 import mob.smilefjesapp.ui.theme.SmilefjesappTheme
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 class KommuneActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        val kommuneTabell  = resources.getStringArray(R.array.kommuner).asList()
         super.onCreate(savedInstanceState)
         setContent {
             SmilefjesappTheme {
-                // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    KommuneSiden(kommuneTabell)
+                    val kommuneInfoList = remember { mutableStateOf(listOf<KommuneInfo>()) }
+                    hentAlleKommuner(kommuneInfoList)
+                    KommuneSiden(kommuneInfoList.value)
                 }
             }
         }
     }
 }
 
+private fun hentAlleKommuner(kommuneInfoList: MutableState<List<KommuneInfo>>) {
+    val BASE_URL = "https://ws.geonorge.no/"
+    val TAG: String = "CHECK_RESPONSE"
+
+    val api = Retrofit.Builder()
+        .baseUrl(BASE_URL)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+        .create(KommuneApiService::class.java)
+
+    api.hentKommune().enqueue(object : Callback<List<KommuneInfo>> {
+        override fun onResponse(call: Call<List<KommuneInfo>>, response: Response<List<KommuneInfo>>) {
+            if (response.isSuccessful) {
+                response.body()?.let {
+                    kommuneInfoList.value = it
+                }
+            }
+        }
+
+        override fun onFailure(call: Call<List<KommuneInfo>>, t: Throwable) {
+            Log.i(TAG, "onFailure: ${t.message}")
+        }
+    })
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun KommuneSiden(kommuneTabell: List<String>, modifier: Modifier = Modifier){
-    // Fra powerpoint
-    // Lager layoutet på kommunesiden
-    Scaffold (topBar = {TopAppBarKommune()}
-    ) {
+fun KommuneSiden(kommuneInfoTabell: List<KommuneInfo>) {
+    Scaffold(topBar = { TopAppBarKommune() }) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(it),
-                //.background(Color.LightGray),
             horizontalAlignment = Alignment.CenterHorizontally
-        )
-        {
-            KommuneListe(kommuneTabell)
+        ) {
+            KommuneListe(kommuneInfoTabell)
         }
     }
 }
 
 @Composable
-fun KommuneListe(kommuneTabell: List<String>, modifier: Modifier = Modifier) {
-
-    // HENTET FRA POWERPOINT
-
-    // Lager liste med LazyColumn() og en iterator.
-    // LazyColumn lager nye Compose-elementer i listen etterhvert som de skal vises når brukeren ruller i listen
-    LazyColumn(
-        modifier = modifier
-    ) {
-        // Iterator som gjennomløper hele fylkeslisten.
-        items(kommuneTabell) { kommune ->  // Identifikatoren fylke peker på hvert av elementene i listen.
+fun KommuneListe(kommuneInfoTabell: List<KommuneInfo>, modifier: Modifier = Modifier) {
+    LazyColumn(modifier = modifier) {
+        items(kommuneInfoTabell) { kommune ->
             Text(
-                text = kommune,
+                text = kommune.kommunenavnNorsk,
                 modifier = Modifier
                     .padding(20.dp)
-                    .clickable(
-                        enabled = true,
-                        onClick = {
-                            /* Sende videre til spisesteder*/
-                        }
-                    )
                     .fillMaxWidth(),
-                fontSize = 28.sp,
                 color = MaterialTheme.colorScheme.primary,
+                fontSize = 28.sp,
                 maxLines = 1
             )
             Spacer(
@@ -122,45 +136,35 @@ fun KommuneListe(kommuneTabell: List<String>, modifier: Modifier = Modifier) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopAppBarKommune(modifier: Modifier = Modifier){
+fun TopAppBarKommune(modifier: Modifier = Modifier) {
     val localContext = LocalContext.current
-    // Top App Bar for enkel oversikt og navigasjon
     CenterAlignedTopAppBar(
         title = {
-            Text( text = "Kommuner",
+            Text(
+                text = "Kommuner",
                 modifier = Modifier.fillMaxWidth(),
-                style=MaterialTheme.typography.headlineLarge,
+                style = MaterialTheme.typography.headlineLarge,
                 textAlign = TextAlign.Center,
                 maxLines = 1
             )
         },
-        // Tilbakeknapp som sender bruker tilbake til forrige activity
         navigationIcon = {
             IconButton(onClick = { localContext.startActivity(Intent(localContext, MainActivity::class.java)) }) {
-                Icon(imageVector = Icons.Filled.ArrowBack,
+                Icon(
+                    imageVector = Icons.Filled.ArrowBack,
                     contentDescription = "Tilbake"
-                ) }
+                )
+            }
         },
-        // Søkeknapp lar brukeren raskt søke blant kommunene
         actions = {
             IconButton(onClick = { /* do something */ }) {
-                Icon(imageVector = Icons.Filled.Search,
+                Icon(
+                    imageVector = Icons.Filled.Search,
                     contentDescription = "Søk"
-                ) }
+                )
+            }
         },
-        // Fjerner TopAppBars hvite bakgrunn
         colors = TopAppBarDefaults.smallTopAppBarColors(containerColor = Color.Transparent),
         modifier = modifier
     )
 }
-
-
-/*
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview2() {
-    SmilefjesappTheme {
-        KommuneListe(kommuneTabell)
-    }
-}
-*/
