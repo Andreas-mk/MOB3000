@@ -66,16 +66,24 @@ class KommuneActivity : ComponentActivity() {
     }
 }
 
+// Funksjonen som henter inn kommuner via API kall med Retrofit
+// BASE_URL er bare selve nettsiden, også ligger resten av peker til nettside
+// inni KommuneApiService filen, der den peker nøyaktig hvor vi henter data fra
 private fun hentAlleKommuner(kommuneInfoList: MutableState<List<KommuneInfo>>) {
     val BASE_URL = "https://ws.geonorge.no/"
     val TAG: String = "CHECK_RESPONSE"
 
+    // Bygger variabel for API ved å bruke Retrofit.Builder()
+    // legger til BaseURL og legger til Gson converter - som er en oversetter
+    // for raw Json data og gjør det om til brukbare kotlin objekter
     val api = Retrofit.Builder()
         .baseUrl(BASE_URL)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
         .create(KommuneApiService::class.java)
 
+    // Her bruker variablen hentKommune() funksjonen i KommuneApiService og kaller på KommuneInfo
+    // dataklassen. Det er også lagt til funksjoner som sjekker om det blir godkjent eller om det feiler
     api.hentKommune().enqueue(object : Callback<List<KommuneInfo>> {
         override fun onResponse(call: Call<List<KommuneInfo>>, response: Response<List<KommuneInfo>>) {
             if (response.isSuccessful) {
@@ -84,7 +92,6 @@ private fun hentAlleKommuner(kommuneInfoList: MutableState<List<KommuneInfo>>) {
                 }
             }
         }
-
         override fun onFailure(call: Call<List<KommuneInfo>>, t: Throwable) {
             Log.i(TAG, "onFailure: ${t.message}")
         }
@@ -94,6 +101,10 @@ private fun hentAlleKommuner(kommuneInfoList: MutableState<List<KommuneInfo>>) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KommuneSiden(kommuneInfoTabell: List<KommuneInfo>) {
+
+    // Her sorterer vi tabellen på navn
+    val sorterKommune = kommuneInfoTabell.sortedBy{it.kommunenavnNorsk}
+
     Scaffold(topBar = { TopAppBarKommune() }) {
         Column(
             modifier = Modifier
@@ -101,7 +112,7 @@ fun KommuneSiden(kommuneInfoTabell: List<KommuneInfo>) {
                 .padding(it),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            KommuneListe(kommuneInfoTabell)
+            KommuneListe(sorterKommune)
         }
     }
 }

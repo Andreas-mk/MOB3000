@@ -84,7 +84,7 @@ class FylkeActivity : ComponentActivity() {
             .build()
             .create(FylkeAPI::class.java)
 
-    // Her kommer funksjoner for onResponse og onFailure for å sjekke om den feiler
+    // Her kommer funksjoner for onResponse og onFailure for å sjekke om den feiler eller blir godkjent
         api.hentFylke().enqueue(object : Callback<List<FylkeInfo>> {
             override fun onResponse(call: Call<List<FylkeInfo>>, response: Response<List<FylkeInfo>>) {
                 if (response.isSuccessful){
@@ -105,6 +105,7 @@ class FylkeActivity : ComponentActivity() {
 @Composable
 fun FylkeSiden(fylkeInfoTabell: List<FylkeInfo>, modifier: Modifier = Modifier) {
     // Rett fra kommunesiden og powerpoint
+    // Her sorterer vi tabellen på navn
     val sorterFylke = fylkeInfoTabell.sortedBy{it.fylkesnavn}
 
     Scaffold (topBar = {ToppAppBar()}
