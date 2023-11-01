@@ -27,7 +27,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,7 +37,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import mob.smilefjesapp.dataklasse.FylkeInfo
 import mob.smilefjesapp.dataklasse.KommuneInfo
 import mob.smilefjesapp.nettverk.KommuneApiService
 import mob.smilefjesapp.ui.theme.SmilefjesappTheme
@@ -57,9 +55,9 @@ class KommuneActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val kommuneInfoList = remember { mutableStateOf(listOf<KommuneInfo>()) }
-                    hentAlleKommuner(kommuneInfoList)
-                    KommuneSiden(kommuneInfoList.value)
+                    val kommuneInfoListe = remember { mutableStateOf(listOf<KommuneInfo>()) }
+                    hentAlleKommuner(kommuneInfoListe)
+                    KommuneSiden(kommuneInfoListe.value)
                 }
             }
         }
@@ -118,8 +116,8 @@ fun KommuneSiden(kommuneInfoTabell: List<KommuneInfo>) {
 }
 
 @Composable
-fun KommuneListe(kommuneInfoTabell: List<KommuneInfo>, modifier: Modifier = Modifier) {
-    LazyColumn(modifier = modifier) {
+fun KommuneListe(kommuneInfoTabell: List<KommuneInfo>) {
+    LazyColumn(modifier = Modifier) {
         items(kommuneInfoTabell) { kommune ->
             Text(
                 text = kommune.kommunenavnNorsk,
