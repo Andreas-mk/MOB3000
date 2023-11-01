@@ -125,6 +125,7 @@ fun FylkeSiden(fylkeInfoTabell: List<FylkeInfo>, modifier: Modifier = Modifier) 
 @Composable
 fun FylkeListe(fylkeInfoTabell: List<FylkeInfo>, modifier: Modifier = Modifier){
     // Rett fra kommuneactivity som er igjen henter fra powerpoint
+    val context = LocalContext.current
 
     LazyColumn(
         modifier = modifier
@@ -136,6 +137,8 @@ fun FylkeListe(fylkeInfoTabell: List<FylkeInfo>, modifier: Modifier = Modifier){
                 modifier = Modifier
                     .padding(20.dp)
                     .clickable{
+                        val intent = Intent(context, KommuneActivity::class.java)
+                        context.startActivity(intent)
                     }
                     .fillMaxWidth(),
                 color = MaterialTheme.colorScheme.primary,
