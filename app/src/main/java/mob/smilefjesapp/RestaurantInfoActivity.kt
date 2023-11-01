@@ -1,5 +1,6 @@
 package mob.smilefjesapp
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -54,8 +55,11 @@ import androidx.compose.ui.unit.dp
 import mob.smilefjesapp.ui.theme.SmilefjesappTheme
 import android.util.Log
 import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import mob.smilefjesapp.dataklasse.RestaurantInfo
 import mob.smilefjesapp.nettverk.RestaurantApi
@@ -73,17 +77,30 @@ class RestaurantInfoActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    // Henter skjermstørrelsen. Skjermens bredde avgjør hvor mange kort vi viser pr rad
                     val windowSizeClass = calculateWindowSizeClass(this)
-                    RestaurantInfo(Modifier, windowSizeClass)
+                    RestaurantInfo(Modifier, windowSizeClass) // Bygger UI
                 }
             }
         }
     }
 }
+@SuppressLint("CoroutineCreationDuringComposition") // Får ikke launchet korutine uten denne (generert av Android Studio)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeClass){
     val vinduBredde = windowSizeClass.widthSizeClass
+    val coroutineScope = rememberCoroutineScope()
+    var restaurantListe by remember {
+        mutableStateOf(emptyList<RestaurantInfo>())
+    }
+    // Starter en korutine som henter restauranter fra Mattilsynets API
+    coroutineScope.launch(Dispatchers.IO) {
+        val nyListe =
+            hentRestauranter() // Denne tar en stund, vi burde vise et loading ikon eller lignende mens skjermen er tom
+        restaurantListe = nyListe
+    }
+
     Scaffold (topBar = {TopAppBarInfoCard()}
         ) {
         when (vinduBredde) {
@@ -96,9 +113,8 @@ fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeCla
                     horizontalAlignment = Alignment.CenterHorizontally
                 )
                 {
-                    InfoCard("Nellys Kebab", "1601", "Fredrikstad")
-                    InfoCard("Stasjonsbua", "3801", "Bø i Telemark")
-                    InfoCard("Aasmundsen Bakeri", "3800", "Bø i Telemark")
+                    // Lager et kort for hvert element i lista
+                    LagKort(restaurantListe)
                 }
             }
             WindowWidthSizeClass.Medium -> {
@@ -117,9 +133,7 @@ fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeCla
                             horizontalAlignment = Alignment.CenterHorizontally
                         )
                         {
-                            //("Nellys Kebab", "1601", "Fredrikstad")
-                            InfoCard("Stasjonsbua", "3801", "Bø i Telemark")
-                            //InfoCard("Aasmundsen Bakeri", "3800", "Bø i Telemark")
+                            LagKort(restaurantListe)
                         }
                     }
                 }
@@ -139,7 +153,7 @@ fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeCla
                             horizontalAlignment = Alignment.CenterHorizontally
                         )
                         {
-                            InfoCard("Aasmundsen Bakeri", "3800", "Bø i Telemark")
+                            LagKort(restaurantListe)
                         }
                     }
                 }
@@ -147,10 +161,28 @@ fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeCla
         }
     }
 }
+
+/**
+ * Oppretter et kort for en restaurant
+ */
 @Composable
-fun InfoCard(navn : String, postnr : String, stedsnavn : String,/*context: Context,*/ modifier: Modifier = Modifier) {
+fun InfoCard(navn: String,
+             postnr: String,
+             stedsnavn: String,
+             adrlinje1: String,
+             totalKarakter: String,
+             tema1: String,
+             karakter1: String,
+             tema2: String,
+             karakter2: String,
+             tema3: String,
+             karakter3: String,
+             tema4: String,
+             karakter4: String,
+             modifier: Modifier = Modifier
+) {
     var expanded by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
+
     OutlinedCard(
         modifier= modifier
             .fillMaxWidth()
@@ -159,15 +191,9 @@ fun InfoCard(navn : String, postnr : String, stedsnavn : String,/*context: Conte
                 true,
                 onClick = {
                     expanded = !expanded
-                    /* Gjør kortet større, vis MerInfo*/
-                    coroutineScope.launch(Dispatchers.IO) {
-                        hentRestauranter() // HUSK CORUTINE!!!!!
-                    }
-
                 }
             )
     ) {
-       // var expanded by remember { mutableStateOf(false) }
         Column(
             modifier= modifier
                 .background(MaterialTheme.colorScheme.primary)
@@ -194,15 +220,35 @@ fun InfoCard(navn : String, postnr : String, stedsnavn : String,/*context: Conte
                     //modifier = Modifier,
                     //horizontalAlignment = Alignment.CenterHorizontally
                 ){
-                    Image(
-                        painter = painterResource(id = R.drawable.grnn),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentWidth(Alignment.End)
-                            .padding(10.dp),
-
-                        contentDescription = ("Grønn Smilefjes")
-                    )
+                    // Setter farge på smilefjeset (basert på totalkarakter)
+                    if(totalKarakter == "0" || totalKarakter == "1")
+                        Image(
+                            painter = painterResource(id = R.drawable.grnn),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentWidth(Alignment.End)
+                                .padding(10.dp),
+                            contentDescription = ("Grønt smilefjes, karakter 0 eller 1")
+                        )
+                    else if(totalKarakter == "2")
+                        Image(
+                            painter = painterResource(id = R.drawable.gul),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentWidth(Alignment.End)
+                                .padding(10.dp),
+                            contentDescription = ("Gult smilefjes, karakter 1")
+                        )
+                    else if(totalKarakter == "3")
+                        Image(
+                            painter = painterResource(id = R.drawable.rd),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentWidth(Alignment.End)
+                                .padding(10.dp),
+                            contentDescription = ("Rødt smilefjes, karakter 2")
+                        )
+                    // Totalkarakter 4 eller 5 er ikke aktuelt / ikke vurdert, derfor får de ikke smilefjes
                 }
             }
             Row(
@@ -216,8 +262,18 @@ fun InfoCard(navn : String, postnr : String, stedsnavn : String,/*context: Conte
                     //onClick = { expanded = !expanded }
                 )
             }
+            // Utvider kortet og viser detaljert informasjon
             if (expanded) {
                 UtvidInfo(
+                    adrlinje1,
+                    tema1,
+                    karakter1,
+                    tema2,
+                    karakter2,
+                    tema3,
+                    karakter3,
+                    tema4,
+                    karakter4,
                     modifier = Modifier.padding(
                         start = 16.dp,
                         top = 8.dp,
@@ -230,6 +286,9 @@ fun InfoCard(navn : String, postnr : String, stedsnavn : String,/*context: Conte
     }
 }
 
+/**
+ * I hovedsak kun for at brukeren skal forstå at man kan trykke på kortene
+ */
 @Composable
 private fun UtvidButton(
     expanded: Boolean,
@@ -249,12 +308,23 @@ private fun UtvidButton(
     }
 }
 
+/**
+ * Detaljert info om hvert spisested
+ */
 @Composable
 fun UtvidInfo(
-    //restaurant: Restaurant,
+    adrlinje1: String,
+    tema1: String,
+    karakter1: String,
+    tema2: String,
+    karakter2: String,
+    tema3: String,
+    karakter3: String,
+    tema4: String,
+    karakter4: String,
     modifier: Modifier = Modifier
 ) {
-    var favoritt by remember { mutableStateOf(false) } // HUSK ENDRE PÅ DENNE
+    var favoritt by remember { mutableStateOf(false) } // Husk å endre på denne?
     /*
     * Vis favorittside? I burgermeny?
     * */
@@ -266,7 +336,7 @@ fun UtvidInfo(
     {
         Row {
             Text(
-                text = "Storgata 13.",
+                text = adrlinje1,
                 modifier = Modifier.padding(5.dp),
                 color = Color.White,
                 style = MaterialTheme.typography.bodyMedium
@@ -281,16 +351,15 @@ fun UtvidInfo(
                 imageVector = if (favoritt) Icons.Filled.Star else Icons.Outlined.Star, /* Få tak i favoritt fra database?*/
                 contentDescription = "Favoritt-ikon"
             )
-
         }
         Text(
-            text = "Rutiner og ledelse: 1"/*${restaurant.rating.toString()}*/,
+            text = "$tema1 $karakter1",
             modifier = Modifier.padding(5.dp),
             color = Color.White,
             style = MaterialTheme.typography.bodyMedium
         )
         Text(
-            text = "Lokaler og utstyr: 0",
+            text = "$tema2 $karakter2",
             modifier = Modifier
                 .padding(5.dp)
                 .fillMaxWidth(),
@@ -298,13 +367,13 @@ fun UtvidInfo(
             style = MaterialTheme.typography.bodyMedium
         )
         Text(
-            text = "Mat-håndtering og tilberedning: 1",
+            text = "$tema3 $karakter3",
             modifier = Modifier.padding(5.dp),
             color = Color.White,
             style = MaterialTheme.typography.bodyMedium
         )
         Text(
-            text = "Merking og sporbarhet: 2",
+            text = "$tema4 $karakter4",
             modifier = Modifier
                 .padding(5.dp)
                 .fillMaxWidth(),
@@ -341,10 +410,30 @@ suspend fun hentRestauranter(): List<RestaurantInfo>{
         Log.d("IOException", "IOException :( $e")
     } catch (e: HttpException) {
         Log.d("HTTPException", "HTTPException :( $e")
-    } catch (e: Exception) {
-        Log.e("Exception", " (Finner ikke relevant JSON Decoding Error): $e")
     }
     return emptyList() // Ikke et suksessfullt API kall, tom liste returneres
+}
+
+/**
+ * Lager et kort for hvert element i lista med restauranter vi henter fra API
+ */
+@Composable
+fun LagKort(restaurantListe: List<RestaurantInfo>){
+    for(restaurant in restaurantListe){
+        InfoCard(restaurant.navn,
+            restaurant.postnr,
+            restaurant.poststed,
+            restaurant.adrlinje1,
+            restaurant.totalKarakter,
+            restaurant.tema1,
+            restaurant.karakter1,
+            restaurant.tema2,
+            restaurant.karakter2,
+            restaurant.tema3,
+            restaurant.karakter3,
+            restaurant.tema4,
+            restaurant.karakter4)
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

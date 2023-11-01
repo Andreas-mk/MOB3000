@@ -73,7 +73,7 @@ fun Start(modifier: Modifier = Modifier, windowSizeClass : WindowSizeClass) {
     val vinduBredde = windowSizeClass.widthSizeClass
     // Text i textfield (søkefelt)
     var text by rememberSaveable(stateSaver = TextFieldValue.Saver) {
-        mutableStateOf(TextFieldValue("", TextRange(0, 7))) // Stringen var example før, kan fjernes??
+        mutableStateOf(TextFieldValue("", TextRange(0, 7)))
     }
     Scaffold(topBar = { TopAppBar() }
     ) {

@@ -9,7 +9,7 @@ import retrofit2.Response
 import retrofit2.http.GET
 
 /**
- * Standard Retrofit ApiService oppsett (mars photo codelaben)
+ * Standard Retrofit ApiService oppsett (mars photo codelaben / powerpoint)
  */
 
 // Det finnes flere Keys i datasettet vi ikke trenger (feks de samme kategoriene, men på nynorsk), derfor ignorerer vi disse.
@@ -20,7 +20,7 @@ private val retrofit = Retrofit.Builder()
     .baseUrl(BASE_URL)
     .build()
 interface RestaurantApiService{
-    @GET("api/json/mattilsynet/smilefjes/tilsyn?")
+    @GET("api/json/mattilsynet/smilefjes/tilsyn?postnr=3800") // postnr verdien endres utifra valgte kommune
     suspend fun hentRestauranter(): Response<ApiResponse>
 }
 object RestaurantApi {
