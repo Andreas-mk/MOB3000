@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,7 +38,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import mob.smilefjesapp.dataklasse.FylkeInfo
 import mob.smilefjesapp.dataklasse.KommuneInfo
+import mob.smilefjesapp.dataklasse.getKommuneListeForFylke
 import mob.smilefjesapp.nettverk.KommuneApiService
 import mob.smilefjesapp.ui.theme.SmilefjesappTheme
 import retrofit2.Call
@@ -57,7 +60,12 @@ class KommuneActivity : ComponentActivity() {
                 ) {
                     val kommuneInfoListe = remember { mutableStateOf(listOf<KommuneInfo>()) }
                     hentAlleKommuner(kommuneInfoListe)
-                    KommuneSiden(kommuneInfoListe.value)
+
+                    // https://medium.com/the-lazy-coders-journal/easy-parcelable-in-kotlin-the-lazy-coders-way-9683122f4c00
+                    val fylkeInfo: FylkeInfo? = intent.getParcelableExtra("fylkeInfo")
+                    val allKommuneListe = getKommuneListeForFylke(kommuneInfoListe.value, fylkeInfo)
+
+                    KommuneSiden(allKommuneListe)
                 }
             }
         }
@@ -101,7 +109,7 @@ private fun hentAlleKommuner(kommuneInfoList: MutableState<List<KommuneInfo>>) {
 fun KommuneSiden(kommuneInfoTabell: List<KommuneInfo>) {
 
     // Her sorterer vi tabellen på navn
-    val sorterKommune = kommuneInfoTabell.sortedBy{it.kommunenavnNorsk}
+    val sorterKommune = kommuneInfoTabell.sortedBy{it.kommunenummer}
 
     Scaffold(topBar = { TopAppBarKommune() }) {
         Column(
@@ -117,12 +125,19 @@ fun KommuneSiden(kommuneInfoTabell: List<KommuneInfo>) {
 
 @Composable
 fun KommuneListe(kommuneInfoTabell: List<KommuneInfo>) {
+
+    val kommuneContext = LocalContext.current
+
     LazyColumn(modifier = Modifier) {
         items(kommuneInfoTabell) { kommune ->
             Text(
                 text = kommune.kommunenavnNorsk,
                 modifier = Modifier
                     .padding(20.dp)
+                    .clickable{
+                      val intent = Intent(kommuneContext, RestaurantInfoActivity::class.java)
+                      kommuneContext.startActivity(intent)
+                    }
                     .fillMaxWidth(),
                 color = MaterialTheme.colorScheme.primary,
                 fontSize = 28.sp,

@@ -2,6 +2,7 @@ package mob.smilefjesapp
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Parcelable
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -106,7 +107,7 @@ class FylkeActivity : ComponentActivity() {
 fun FylkeSiden(fylkeInfoTabell: List<FylkeInfo>, modifier: Modifier = Modifier) {
     // Rett fra kommunesiden og powerpoint
     // Her sorterer vi tabellen på navn
-    val sorterFylke = fylkeInfoTabell.sortedBy{it.fylkesnavn}
+    val sorterFylke = fylkeInfoTabell.sortedBy{it.fylkesnummer}
 
     Scaffold (topBar = {ToppAppBar()}
     ){
@@ -139,6 +140,8 @@ fun FylkeListe(fylkeInfoTabell: List<FylkeInfo>, modifier: Modifier = Modifier){
                     .padding(20.dp)
                     .clickable{
                         val intent = Intent(context, KommuneActivity::class.java)
+                        // https://medium.com/the-lazy-coders-journal/easy-parcelable-in-kotlin-the-lazy-coders-way-9683122f4c00
+                        intent.putExtra("fylkeInfo",fylke)
                         context.startActivity(intent)
                     }
                     .fillMaxWidth(),

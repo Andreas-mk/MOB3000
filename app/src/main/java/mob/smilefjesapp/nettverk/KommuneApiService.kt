@@ -12,3 +12,4 @@ interface KommuneApiService {
     @GET("kommuneinfo/v1/kommuner")
     fun hentKommune(): Call<List<KommuneInfo>>
 }
+
