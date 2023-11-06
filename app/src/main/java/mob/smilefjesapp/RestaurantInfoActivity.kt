@@ -77,9 +77,10 @@ class RestaurantInfoActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    val valgtKommune = intent.getStringExtra("valgtKommune")
                     // Henter skjermstørrelsen. Skjermens bredde avgjør hvor mange kort vi viser pr rad
                     val windowSizeClass = calculateWindowSizeClass(this)
-                    RestaurantInfo(Modifier, windowSizeClass) // Bygger UI
+                    RestaurantInfo(Modifier, windowSizeClass, valgtKommune) // Bygger UI
                 }
             }
         }
@@ -88,7 +89,7 @@ class RestaurantInfoActivity : ComponentActivity() {
 @SuppressLint("CoroutineCreationDuringComposition") // Får ikke launchet korutine uten denne (generert av Android Studio)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeClass){
+fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeClass, valgtKommune: String?){
     val vinduBredde = windowSizeClass.widthSizeClass
     val coroutineScope = rememberCoroutineScope()
     var restaurantListe by remember {
@@ -97,7 +98,7 @@ fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeCla
     // Starter en korutine som henter restauranter fra Mattilsynets API
     coroutineScope.launch(Dispatchers.IO) {
         val nyListe =
-            hentRestauranter() // Denne tar en stund, vi burde vise et loading ikon eller lignende mens skjermen er tom
+            hentRestauranter(valgtKommune) // Denne tar en stund, vi burde vise et loading ikon eller lignende mens skjermen er tom
         restaurantListe = nyListe
     }
 
@@ -388,9 +389,11 @@ fun UtvidInfo(
  * Henter en liste med restauranter (**basert på fylke/kommune/søk, vi må sende med noen parametre her etterhvert**)
  * og returnerer denne lista hvis vi har fått tak i data, hvis ikke returneres en tom liste
  */
-suspend fun hentRestauranter(): List<RestaurantInfo>{
+suspend fun hentRestauranter(valgtKommune: String? = null): List<RestaurantInfo>{
+
     try {
-        val svar = RestaurantApi.retrofitService.hentRestauranter()
+        // !! = not null assertion operator :
+        val svar = RestaurantApi.retrofitService.hentRestauranter(valgtKommune!!)
         if (svar.isSuccessful) {
             val apiSvar = svar.body()
             Log.d("Svarsjekk", "Svar isSuccessful")

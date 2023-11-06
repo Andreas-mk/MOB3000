@@ -136,6 +136,7 @@ fun KommuneListe(kommuneInfoTabell: List<KommuneInfo>) {
                     .padding(20.dp)
                     .clickable{
                       val intent = Intent(kommuneContext, RestaurantInfoActivity::class.java)
+                      intent.putExtra("valgtKommune", kommune.kommunenavnNorsk)
                       kommuneContext.startActivity(intent)
                     }
                     .fillMaxWidth(),
