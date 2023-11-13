@@ -1,6 +1,7 @@
 package mob.smilefjesapp
 
 import android.content.Intent
+import android.graphics.drawable.Icon
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,6 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Divider
@@ -33,6 +36,7 @@ import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -40,10 +44,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.google.android.material.search.SearchBar
 import mob.smilefjesapp.ui.theme.SmilefjesappTheme
 
 class MainActivity : ComponentActivity() {
@@ -72,9 +78,10 @@ fun Start(modifier: Modifier = Modifier, windowSizeClass : WindowSizeClass) {
     val localContext = LocalContext.current
     val vinduBredde = windowSizeClass.widthSizeClass
     // Text i textfield (søkefelt)
-    var text by rememberSaveable(stateSaver = TextFieldValue.Saver) {
-        mutableStateOf(TextFieldValue("", TextRange(0, 7)))
-    }
+    //var text by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+    //    mutableStateOf(TextFieldValue("", TextRange(0, 7)))
+    //}
+    var text by remember { mutableStateOf("") } // alternativt?
     Scaffold(topBar = { TopAppBar() }
     ) {
         when(vinduBredde){
@@ -87,21 +94,20 @@ fun Start(modifier: Modifier = Modifier, windowSizeClass : WindowSizeClass) {
                     horizontalAlignment = Alignment.CenterHorizontally
 
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.smilefjes),
-                        contentDescription = ("Smilefjes-logo")
-                    )
+
                     Divider(
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(3.dp)
                     )
-                    Spacer(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(50.dp)
+
+                    Image(
+                        painter = painterResource(id = R.drawable.smilefjes),
+                        contentDescription = ("Smilefjes-logo"),
+                        Modifier.size(600.dp, 200.dp)
                     )
+
                     Button(
                         modifier = Modifier
                             .padding(5.dp)
@@ -112,19 +118,6 @@ fun Start(modifier: Modifier = Modifier, windowSizeClass : WindowSizeClass) {
                     ) {
                         Text(
                             text = "Vis fylker",
-                            style = MaterialTheme.typography.headlineMedium
-                        )
-                    }
-                    Button(
-                        modifier = Modifier
-                            .padding(5.dp)
-                            .size(270.dp, 65.dp),
-                        onClick = {
-                            localContext.startActivity(Intent(localContext, KommuneActivity::class.java))
-                        }
-                    ) {
-                        Text(
-                            text = "Vis kommuner",
                             style = MaterialTheme.typography.headlineMedium
                         )
                     }
@@ -148,6 +141,9 @@ fun Start(modifier: Modifier = Modifier, windowSizeClass : WindowSizeClass) {
                         onClick = {
                             //localContext.startActivity(Intent(localContext, KommuneActivity::class.java))
                             // Hent info fra Textfield -> Send rett til info side om riktig restaurant
+                            val intent = Intent(localContext, RestaurantInfoActivity::class.java)
+                            intent.putExtra("navn", text)/*TEKST FRA TEXTFIELD*/
+                            localContext.startActivity(intent)
                         }
                     ) {
                         Text(
@@ -155,19 +151,11 @@ fun Start(modifier: Modifier = Modifier, windowSizeClass : WindowSizeClass) {
                             style = MaterialTheme.typography.headlineMedium
                         )
                     }
-                    Button(
-                        modifier = Modifier
-                            .padding(5.dp)
-                            .size(270.dp, 65.dp),
-                        onClick = {
-                            localContext.startActivity(Intent(localContext, RestaurantInfoActivity::class.java))
-                        }
-                    ) {
-                        Text(
-                            text = "Restaurant info",
-                            style = MaterialTheme.typography.headlineMedium
-                        )
-                    }
+                    Spacer(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp)
+                    )
                     Button(
                         modifier = Modifier
                             .padding(5.dp)
@@ -177,7 +165,7 @@ fun Start(modifier: Modifier = Modifier, windowSizeClass : WindowSizeClass) {
                         }
                     ) {
                         Text(
-                            text = "Favoritter",
+                            text = "GPS Posisjon",
                             style = MaterialTheme.typography.headlineMedium
                         )
                     }

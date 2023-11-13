@@ -54,6 +54,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import mob.smilefjesapp.ui.theme.SmilefjesappTheme
 import android.util.Log
+import androidx.compose.material3.ListItem
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -61,10 +62,15 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
+import mob.smilefjesapp.dataklasse.ApiResponse
 import mob.smilefjesapp.dataklasse.RestaurantInfo
 import mob.smilefjesapp.nettverk.RestaurantApi
 import retrofit2.HttpException
+import retrofit2.Response
 import java.io.IOException
+import java.lang.Integer.parseInt
+import java.time.Year
+import java.util.Date
 
 class RestaurantInfoActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
@@ -78,18 +84,23 @@ class RestaurantInfoActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val valgtKommune = intent.getStringExtra("valgtKommune")
+                    val tekstSøk = intent.getStringExtra("navn")
                     // Henter skjermstørrelsen. Skjermens bredde avgjør hvor mange kort vi viser pr rad
                     val windowSizeClass = calculateWindowSizeClass(this)
-                    RestaurantInfo(Modifier, windowSizeClass, valgtKommune) // Bygger UI
+
+                    RestaurantInfo(Modifier, windowSizeClass, valgtKommune, tekstSøk) // Bygger UI
+                    // gjør likt som med valgtKommune, bare sende med stringen bruker skriver inn i søkefelt i stedet
+                    // gjør en if-sjekk på om valgtKommune eller søkefelt er null -> bygg gui etter svar på dette
                 }
             }
         }
     }
 }
+
 @SuppressLint("CoroutineCreationDuringComposition") // Får ikke launchet korutine uten denne (generert av Android Studio)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeClass, valgtKommune: String?){
+fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeClass, valgtKommune: String?, tekstSøk: String?){
     val vinduBredde = windowSizeClass.widthSizeClass
     val coroutineScope = rememberCoroutineScope()
     var restaurantListe by remember {
@@ -97,8 +108,7 @@ fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeCla
     }
     // Starter en korutine som henter restauranter fra Mattilsynets API
     coroutineScope.launch(Dispatchers.IO) {
-        val nyListe =
-            hentRestauranter(valgtKommune) // Denne tar en stund, vi burde vise et loading ikon eller lignende mens skjermen er tom
+        val nyListe = hentRestauranter(valgtKommune, tekstSøk) // Vise et loading ikon eller lignende mens skjermen er tom?
         restaurantListe = nyListe
     }
 
@@ -114,8 +124,14 @@ fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeCla
                     horizontalAlignment = Alignment.CenterHorizontally
                 )
                 {
-                    // Lager et kort for hvert element i lista
-                    LagKort(restaurantListe)
+                    // Forteller bruker at søket ga 0 resultater
+                    if(restaurantListe.isEmpty()){
+                        Text(text = "Ditt søk ga 0 resultater", // Denne vises også før kortene lages når vi får svar
+                            style = MaterialTheme.typography.headlineMedium)
+                    } else {
+                        // Lager et kort for hvert element i lista
+                        LagKort(restaurantListe)
+                    }
                 }
             }
             WindowWidthSizeClass.Medium -> {
@@ -162,7 +178,27 @@ fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeCla
         }
     }
 }
-
+/**
+ * Lager et kort for hvert element i lista med restauranter vi henter fra API
+ */
+@Composable
+fun LagKort(restaurantListe: List<RestaurantInfo>){
+    for(restaurant in restaurantListe){
+        InfoCard(restaurant.navn,
+            restaurant.postnr,
+            restaurant.poststed,
+            restaurant.adrlinje1,
+            restaurant.totalKarakter,
+            restaurant.tema1,
+            restaurant.karakter1,
+            restaurant.tema2,
+            restaurant.karakter2,
+            restaurant.tema3,
+            restaurant.karakter3,
+            restaurant.tema4,
+            restaurant.karakter4)
+    }
+}
 /**
  * Oppretter et kort for en restaurant
  */
@@ -389,20 +425,75 @@ fun UtvidInfo(
  * Henter en liste med restauranter (**basert på fylke/kommune/søk, vi må sende med noen parametre her etterhvert**)
  * og returnerer denne lista hvis vi har fått tak i data, hvis ikke returneres en tom liste
  */
-suspend fun hentRestauranter(valgtKommune: String? = null): List<RestaurantInfo>{
+suspend fun hentRestauranter(valgtKommune: String?, tekstSøk: String?): List<RestaurantInfo>{
 
     try {
-        // !! = not null assertion operator :
-        val svar = RestaurantApi.retrofitService.hentRestauranter(valgtKommune!!)
+        val svar: Response<ApiResponse>
+        // I appen er det to muligheter for å se restauranter. Hvis det ikke er den ene så er det den andre
+        if(tekstSøk==null){
+            // !! = not null assertion operator :
+            svar = RestaurantApi.retrofitService.hentRestauranter(valgtKommune!!)
+        }
+        else {
+            svar = RestaurantApi.retrofitService.hentMedSøk(tekstSøk)
+        }
+        val nyListe: MutableList<RestaurantInfo> = mutableListOf() // bruker denne til å filtrere ut gamle tilsyn
         if (svar.isSuccessful) {
+            val headers = svar.headers()
+            val totaltPages = headers["X-Datahotel-Total-Pages"] // Henter antall sider fra API headers (Pagination)
+            val totaltPosts = headers["X-Datahotel-Total-Posts"] // "Ditt søk ga $totaltPosts resultater" mens man venter på kortene?
+            if (totaltPages != null) {
+                Log.d("HEADERS", totaltPages)
+            }
             val apiSvar = svar.body()
             Log.d("Svarsjekk", "Svar isSuccessful")
             if (apiSvar != null) {
                 Log.d("Antall svar", "Antall restauranter: ${apiSvar.entries.size}")
+
+                // FORSLAG
+                // Kjør gjennom API response (alle pages)
+                // Legg til alt i en ny liste
+                // Gå gjennom ny liste med alle restauranter
+
                 for (restaurant in apiSvar.entries) { // Kun for å printe i logcat
-                    Log.d("Svar", "Restaurantnavn: ${restaurant.navn}, Adresse: ${restaurant.adrlinje1}")
+                    //Log.d("Svar", "Restaurantnavn: ${restaurant.navn}, Adresse: ${restaurant.adrlinje1}")
+                    // Henter nyeste dato, fjerner eldre tilsyn fra lista // sjekk på orgnr???
+                    Log.d("Datosjekk", "Dato: ${restaurant.dato}")
+                    //val sisteDato: Date = parseDate(restaurant.dato)
+                    //Log.d("Siste dato???", ""+ sisteDato)
+                    // Mulig vi kan lage en SimpleDateFormat? https://developer.android.com/reference/kotlin/java/text/SimpleDateFormat
+                    // format på dato fra API: "ddmmyyyy"
+                    val år: Int = parseInt(restaurant.dato.substring(4))
+                    val måned: Int = parseInt(restaurant.dato.substring(2,4))
+                    val dag: Int = parseInt(restaurant.dato.substring(0,2))
+                    val orgnummer = restaurant.orgnummer
+                    Log.d("DATO", "Dag $dag. Måned $måned. År $år")
+                    if(nyListe.contains(restaurant)){
+                        Log.d("HAMAR", "HAMAR: ${restaurant.dato}")
+
+                        //nyListe.remove()
+                    }else{
+                        nyListe.add(restaurant)
+                    }
+                    for(r in nyListe) {
+                        //if (år > parseInt(r.dato.substring(4)))
+                        Log.d("ORGNR", "1 - $orgnummer   2 - ${r.orgnummer}")
+                        if((orgnummer == r.orgnummer) && (år > parseInt(r.dato.substring(4)))) {
+                            Log.d("HEI", "JA DUUU $år - " + parseInt(r.dato.substring(4)))
+                            //nyListe.remove(restaurant) // ConcurrentModificationException ???? (det gir jo desverre mening)
+                            // dette må nok flyttes opp inn i if'en kanskje
+
+                            // IKKE SJEKK CONTAINS
+                            // Sjekk: Finnes orgnr fra før? -> sjekk dato på den -> overskriv???? HVORDAN????????????
+                            // forslag: Hver page i hver sin liste -> gå gjennom alle og legg til/fjern i nyListe
+                            // returner nyListe
+
+                        }
+                    }
+                    //if(år > år som allerede er i lista && samme med måned / dag)
+                     //   fjerner gammel, legger til ny i stedet*/
                 }
-                return apiSvar.entries // Returnerer lista med restauranter
+                return nyListe // Returnerer lista med restauranter
             } else {
                 Log.d("apiSvar", "apiSvar er null")
             }
@@ -417,27 +508,6 @@ suspend fun hentRestauranter(valgtKommune: String? = null): List<RestaurantInfo>
     return emptyList() // Ikke et suksessfullt API kall, tom liste returneres
 }
 
-/**
- * Lager et kort for hvert element i lista med restauranter vi henter fra API
- */
-@Composable
-fun LagKort(restaurantListe: List<RestaurantInfo>){
-    for(restaurant in restaurantListe){
-        InfoCard(restaurant.navn,
-            restaurant.postnr,
-            restaurant.poststed,
-            restaurant.adrlinje1,
-            restaurant.totalKarakter,
-            restaurant.tema1,
-            restaurant.karakter1,
-            restaurant.tema2,
-            restaurant.karakter2,
-            restaurant.tema3,
-            restaurant.karakter3,
-            restaurant.tema4,
-            restaurant.karakter4)
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -471,3 +541,4 @@ fun TopAppBarInfoCard(modifier: Modifier = Modifier){
         modifier = modifier
     )
 }
+

@@ -18,8 +18,10 @@ data class ApiResponse(
 data class RestaurantInfo(
     val navn: String,
     val adrlinje1: String,
+    val orgnummer: String,
     val postnr: String,
     val poststed: String,
+    val dato: String,
     @SerialName(value = "total_karakter")
     val totalKarakter: String,
     @SerialName(value = "tema1_no")

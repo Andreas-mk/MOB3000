@@ -21,11 +21,17 @@ private val retrofit = Retrofit.Builder()
     .baseUrl(BASE_URL)
     .build()
 interface RestaurantApiService{
-    @GET("api/json/mattilsynet/smilefjes/tilsyn") // postnr verdien endres utifra valgte kommune
+    // Henter restauranter basert på brukerens valgte kommune
+    @GET("api/json/mattilsynet/smilefjes/tilsyn?page=2") // postnr verdien endres utifra valgte kommune
     // Legger til query for å hente poststed og bruker dette for å få riktig restaurant i kommune
     suspend fun hentRestauranter(@Query("poststed")poststed: String): Response<ApiResponse>
 
+    // Brukes når bruker søker på restaurant i søkefeltet
+    @GET("api/json/mattilsynet/smilefjes/tilsyn?")
+    suspend fun hentMedSøk(@Query("navn")navn: String): Response<ApiResponse>
+
 }
+
 object RestaurantApi {
     val retrofitService: RestaurantApiService by lazy {
         retrofit.create(RestaurantApiService::class.java)
