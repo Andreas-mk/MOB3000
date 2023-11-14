@@ -122,7 +122,7 @@ fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeCla
                 {
                     // Forteller bruker at søket ga 0 resultater ELLER loading??
                     if(restaurantListe.isEmpty()){
-                        Text(text = "Ditt søk ga 0 resultater", // Denne vises også før kortene lages når vi får svar
+                        Text(text = "Laster...", // Denne vises også før kortene lages når vi får svar
                             style = MaterialTheme.typography.headlineMedium)
                     } else {
                         // Lager et kort for hvert element i lista
@@ -194,7 +194,7 @@ fun LagKort(restaurantListe: List<RestaurantInfo>){
     for(restaurant in restaurantListe){
         InfoCard(restaurant.navn,
             restaurant.postnr,
-            restaurant.dato, // POSTSTED
+            restaurant.poststed,
             restaurant.adrlinje1,
             restaurant.totalKarakter,
             restaurant.tema1,
@@ -354,7 +354,7 @@ private fun UtvidButton(
     modifier: Modifier = Modifier
 ){
     IconButton(
-        onClick = { /*???  expanded?*/ },
+        onClick = { /* expanded = !expanded */ },
         modifier = modifier
     ) {
         Icon(
@@ -561,7 +561,7 @@ fun TopAppBarInfoCard(modifier: Modifier = Modifier){
             )
         },
         navigationIcon = {
-            IconButton(onClick = { localContext.startActivity(Intent(localContext,FylkeActivity::class.java)) }) {
+            IconButton(onClick = { localContext.startActivity(Intent(localContext, MainActivity::class.java)) }) {
                 Icon(imageVector = Icons.Filled.ArrowBack,
                     contentDescription = "Tilbake"
                 ) }
