@@ -23,8 +23,6 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -50,18 +48,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import mob.smilefjesapp.ui.theme.SmilefjesappTheme
 import android.util.Log
-import androidx.compose.material3.ListItem
 import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json
 import mob.smilefjesapp.dataklasse.ApiResponse
 import mob.smilefjesapp.dataklasse.RestaurantInfo
 import mob.smilefjesapp.nettverk.RestaurantApi
@@ -69,8 +61,6 @@ import retrofit2.HttpException
 import retrofit2.Response
 import java.io.IOException
 import java.lang.Integer.parseInt
-import java.time.Year
-import java.util.Date
 
 class RestaurantInfoActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
@@ -186,7 +176,7 @@ fun LagKort(restaurantListe: List<RestaurantInfo>){
     for(restaurant in restaurantListe){
         InfoCard(restaurant.navn,
             restaurant.postnr,
-            restaurant.poststed,
+            restaurant.dato, // POSTSTED
             restaurant.adrlinje1,
             restaurant.totalKarakter,
             restaurant.tema1,
@@ -378,25 +368,15 @@ fun UtvidInfo(
                 color = Color.White,
                 style = MaterialTheme.typography.bodyMedium
             )
-            Text(
-                text = "Favoritt",
-                modifier = Modifier.padding(5.dp),
-                color = Color.White,
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Icon(
-                imageVector = if (favoritt) Icons.Filled.Star else Icons.Outlined.Star, /* Få tak i favoritt fra database?*/
-                contentDescription = "Favoritt-ikon"
-            )
         }
         Text(
-            text = "$tema1 $karakter1",
+            text = "$tema1: $karakter1",
             modifier = Modifier.padding(5.dp),
             color = Color.White,
             style = MaterialTheme.typography.bodyMedium
         )
         Text(
-            text = "$tema2 $karakter2",
+            text = "$tema2: $karakter2",
             modifier = Modifier
                 .padding(5.dp)
                 .fillMaxWidth(),
@@ -404,13 +384,13 @@ fun UtvidInfo(
             style = MaterialTheme.typography.bodyMedium
         )
         Text(
-            text = "$tema3 $karakter3",
+            text = "$tema3: $karakter3",
             modifier = Modifier.padding(5.dp),
             color = Color.White,
             style = MaterialTheme.typography.bodyMedium
         )
         Text(
-            text = "$tema4 $karakter4",
+            text = "$tema4: $karakter4",
             modifier = Modifier
                 .padding(5.dp)
                 .fillMaxWidth(),
@@ -426,74 +406,43 @@ fun UtvidInfo(
  * og returnerer denne lista hvis vi har fått tak i data, hvis ikke returneres en tom liste
  */
 suspend fun hentRestauranter(valgtKommune: String?, tekstSøk: String?): List<RestaurantInfo>{
-
     try {
         val svar: Response<ApiResponse>
+        var alleRestauranter: MutableList<RestaurantInfo> = mutableListOf() // bruker denne til å filtrere ut gamle tilsyn
         // I appen er det to muligheter for å se restauranter. Hvis det ikke er den ene så er det den andre
         if(tekstSøk==null){
             // !! = not null assertion operator :
-            svar = RestaurantApi.retrofitService.hentRestauranter(valgtKommune!!)
+            svar = RestaurantApi.retrofitService.hentRestauranter(valgtKommune!!,1) // Vi henter alltid page 1 fra APIet først
         }
         else {
             svar = RestaurantApi.retrofitService.hentMedSøk(tekstSøk)
         }
-        val nyListe: MutableList<RestaurantInfo> = mutableListOf() // bruker denne til å filtrere ut gamle tilsyn
         if (svar.isSuccessful) {
             val headers = svar.headers()
-            val totaltPages = headers["X-Datahotel-Total-Pages"] // Henter antall sider fra API headers (Pagination)
-            val totaltPosts = headers["X-Datahotel-Total-Posts"] // "Ditt søk ga $totaltPosts resultater" mens man venter på kortene?
-            if (totaltPages != null) {
-                Log.d("HEADERS", totaltPages)
-            }
+            val totalPages = headers["X-Datahotel-Total-Pages"]?.toInt() // Henter antall sider fra API headers (Pagination), parse til Int slik at vi kan bruke tallet i en løkke
+            val totalPosts = headers["X-Datahotel-Total-Posts"] // "Ditt søk ga $totaltPosts resultater" mens man venter på kortene?
             val apiSvar = svar.body()
-            Log.d("Svarsjekk", "Svar isSuccessful")
+            //Log.d("Svarsjekk", "Svar isSuccessful")
             if (apiSvar != null) {
-                Log.d("Antall svar", "Antall restauranter: ${apiSvar.entries.size}")
+                Log.d("Antall svar", "Antall restauranter: $totalPosts")
+                Log.d("HEADERS", " $totalPages")
+                val nyListe = behandleSvar(apiSvar, alleRestauranter)
+                alleRestauranter = nyListe
 
-                // FORSLAG
-                // Kjør gjennom API response (alle pages)
-                // Legg til alt i en ny liste
-                // Gå gjennom ny liste med alle restauranter
-
-                for (restaurant in apiSvar.entries) { // Kun for å printe i logcat
-                    //Log.d("Svar", "Restaurantnavn: ${restaurant.navn}, Adresse: ${restaurant.adrlinje1}")
-                    // Henter nyeste dato, fjerner eldre tilsyn fra lista // sjekk på orgnr???
-                    Log.d("Datosjekk", "Dato: ${restaurant.dato}")
-                    //val sisteDato: Date = parseDate(restaurant.dato)
-                    //Log.d("Siste dato???", ""+ sisteDato)
-                    // Mulig vi kan lage en SimpleDateFormat? https://developer.android.com/reference/kotlin/java/text/SimpleDateFormat
-                    // format på dato fra API: "ddmmyyyy"
-                    val år: Int = parseInt(restaurant.dato.substring(4))
-                    val måned: Int = parseInt(restaurant.dato.substring(2,4))
-                    val dag: Int = parseInt(restaurant.dato.substring(0,2))
-                    val orgnummer = restaurant.orgnummer
-                    Log.d("DATO", "Dag $dag. Måned $måned. År $år")
-                    if(nyListe.contains(restaurant)){
-                        Log.d("HAMAR", "HAMAR: ${restaurant.dato}")
-
-                        //nyListe.remove()
-                    }else{
-                        nyListe.add(restaurant)
-                    }
-                    for(r in nyListe) {
-                        //if (år > parseInt(r.dato.substring(4)))
-                        Log.d("ORGNR", "1 - $orgnummer   2 - ${r.orgnummer}")
-                        if((orgnummer == r.orgnummer) && (år > parseInt(r.dato.substring(4)))) {
-                            Log.d("HEI", "JA DUUU $år - " + parseInt(r.dato.substring(4)))
-                            //nyListe.remove(restaurant) // ConcurrentModificationException ???? (det gir jo desverre mening)
-                            // dette må nok flyttes opp inn i if'en kanskje
-
-                            // IKKE SJEKK CONTAINS
-                            // Sjekk: Finnes orgnr fra før? -> sjekk dato på den -> overskriv???? HVORDAN????????????
-                            // forslag: Hver page i hver sin liste -> gå gjennom alle og legg til/fjern i nyListe
-                            // returner nyListe
-
+                // Paginering (?) Dersom det er flere enn 1 side i APIet må vi hente resten av sidene
+                if(totalPages != null && totalPages > 1){
+                    for(i in 2..totalPages){ // starter på 2 siden vi allerede har hentet page 1
+                        val nestePage = RestaurantApi.retrofitService.hentRestauranter(valgtKommune!!,i)
+                        if(nestePage.isSuccessful){
+                            val pageSvar = nestePage.body()
+                            if(pageSvar != null){
+                                val nyListe2 = behandleSvar(pageSvar, alleRestauranter)
+                                alleRestauranter = nyListe2
+                            }
                         }
                     }
-                    //if(år > år som allerede er i lista && samme med måned / dag)
-                     //   fjerner gammel, legger til ny i stedet*/
                 }
-                return nyListe // Returnerer lista med restauranter
+                return alleRestauranter // Returnerer lista med restauranter
             } else {
                 Log.d("apiSvar", "apiSvar er null")
             }
@@ -506,6 +455,63 @@ suspend fun hentRestauranter(valgtKommune: String?, tekstSøk: String?): List<Re
         Log.d("HTTPException", "HTTPException :( $e")
     }
     return emptyList() // Ikke et suksessfullt API kall, tom liste returneres
+}
+
+fun behandleSvar(apiSvar: ApiResponse, liste: MutableList<RestaurantInfo>): MutableList<RestaurantInfo>{
+    var teller = 0
+    for (restaurant in apiSvar.entries) {
+        // Mulig vi kan lage en SimpleDateFormat? https://developer.android.com/reference/kotlin/java/text/SimpleDateFormat
+        // format på dato fra API: "ddmmyyyy"
+        val år: Int = parseInt(restaurant.dato.substring(4))
+        val måned: Int = parseInt(restaurant.dato.substring(2,4))
+        val dag: Int = parseInt(restaurant.dato.substring(0,2))
+        var nyttTilsyn = false
+
+        // If-sjekkene finner ut dette restaurant-tilsynet er det nyeste
+        // (Denne ser grusom ut, kan den forbedres????)
+        if(!liste.any{it.orgnummer == restaurant.orgnummer}){
+            nyttTilsyn = true
+            liste.add(restaurant) // hvis ikke orgnummer finnes i lista legges restauranten inn uansett
+        }else if(liste.any {
+                it.orgnummer == restaurant.orgnummer
+                && parseInt(it.dato.substring(4)) < år }
+            ){
+            nyttTilsyn = true
+        }else if (liste.any {
+                it.orgnummer == restaurant.orgnummer
+                && parseInt(it.dato.substring(4)) == år
+                && parseInt(it.dato.substring(2,4)) < måned }
+            ){
+            nyttTilsyn = true
+        }else if (liste.any {
+                it.orgnummer == restaurant.orgnummer
+                && parseInt(it.dato.substring(4)) == år
+                && parseInt(it.dato.substring(2,4)) == måned
+                && parseInt(restaurant.dato.substring(0,2)) < dag }
+            ){
+            nyttTilsyn = true
+        }
+        // Fjerner et element fra lista dersom orgnummeret finnes fra før og datosjekken har slått til
+        liste.removeIf{
+           it.orgnummer == restaurant.orgnummer && nyttTilsyn
+        }
+        if(!nyttTilsyn) {
+            //liste.removeIf { it.orgnummer == restaurant.orgnummer }
+            Log.d("False", "Ikke nytt ${restaurant.dato}")
+        }
+        if(nyttTilsyn) {
+            liste.add(restaurant)
+            Log.d("ADD", "Addet orgnr ${restaurant.orgnummer} Dato ${restaurant.dato}")
+        }
+        // Kun for testing, kan fjernes
+        val verdi = liste.any{it.orgnummer == restaurant.orgnummer && nyttTilsyn}
+        if(verdi){
+            teller++
+            Log.d("????????", "Fant 1 tilfelle av samme orgnr ${restaurant.orgnummer} og DATO: ${restaurant.dato} TELLER: $teller")
+            //nyListe.remove
+        }
+    }
+    return liste
 }
 
 
