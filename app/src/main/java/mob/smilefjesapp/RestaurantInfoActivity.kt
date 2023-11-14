@@ -56,6 +56,8 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.Dispatchers
@@ -131,61 +133,67 @@ fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeCla
                 }
             }
             WindowWidthSizeClass.Medium -> {
-                Column(
+                Row(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
                         .padding(it)
-
                         .verticalScroll(rememberScrollState()),
-                        //.weight(1f),
-                    //horizontalAlignment = Alignment.CenterHorizontally,
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    if (restaurantListe.isEmpty()) {
-                        Text(
-                            text = "Laster...", // Denne vises også før kortene lages når vi får svar
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    } else {
-                        /*restaurantListe.chunked(2) { chunk ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(it)
-                                    .weight(1f),
-                                horizontalArrangement = Arrangement.SpaceEvenly
-                            ) {
-                            // Lager et kort for hvert element i lista
-                                chunk.forEach { restaurant ->
-                                    LagKort(restaurantListe)
-                                }
-                            }
-                        }*/
-                    }
+                    // 2 kort ved siden av hverandre i hver sin kolonne.
+                    // Vi deler lista med alle restauranter i to slik at vi kan bruke LagKort funksjonen.
+                    // Sublist KILDE: https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/sub-list.html
+                    val midten = restaurantListe.size/2
+                    val delListe1: List<RestaurantInfo> = restaurantListe.subList(0, midten)
+                    val delListe2: List<RestaurantInfo> = restaurantListe.subList(midten, restaurantListe.size)
+
+                    FlereKolonner(delListe1, modifier = Modifier.fillMaxWidth().weight(1f))
+                    FlereKolonner(delListe2, modifier = Modifier.fillMaxWidth().weight(1f))
                 }
             }
             WindowWidthSizeClass.Expanded -> {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(it),
+                        .padding(it)
+                        .verticalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    repeat(4) {// 4 kort ved siden av hverandre
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        )
-                        {
-                            LagKort(restaurantListe)
-                        }
-                    }
+                    // Samme som WindowWidthSizeClass.Medium, men her lager vi 4 kolonner for å bedre utnytte skjermen
+                    val førsteSkille = restaurantListe.size/4
+                    val andreSkille = restaurantListe.size/2
+                    val tredjeSkille = førsteSkille + andreSkille
+                    val delListe1: List<RestaurantInfo> = restaurantListe.subList(0, førsteSkille)
+                    val delListe2: List<RestaurantInfo> = restaurantListe.subList(førsteSkille, andreSkille)
+                    val delListe3: List<RestaurantInfo> = restaurantListe.subList(andreSkille, tredjeSkille)
+                    val delListe4: List<RestaurantInfo> = restaurantListe.subList(tredjeSkille, restaurantListe.size)
+
+                    FlereKolonner(delListe1, modifier = Modifier.fillMaxWidth().weight(1f))
+                    FlereKolonner(delListe2, modifier = Modifier.fillMaxWidth().weight(1f))
+                    FlereKolonner(delListe3, modifier = Modifier.fillMaxWidth().weight(1f))
+                    FlereKolonner(delListe4, modifier = Modifier.fillMaxWidth().weight(1f))
+
                 }
             }
         }
     }
 }
+
+/**
+ * Oppretter en ny kolonne og fyller den med restauranter.
+ * Brukes kun for å utnytte bred skjerm slik at bruker kan se flere restauranter ved siden av hverandre
+ */
+@Composable
+fun FlereKolonner(delListe: List<RestaurantInfo>, modifier: Modifier){
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    )
+    {
+        LagKort(delListe)
+    }
+}
+
 /**
  * Lager et kort for hvert element i lista med restauranter vi henter fra API
  */
