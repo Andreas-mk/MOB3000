@@ -181,14 +181,7 @@ fun TopAppBarKommune(modifier: Modifier = Modifier) {
                 )
             }
         },
-        actions = {
-            IconButton(onClick = { /* do something */ }) {
-                Icon(
-                    imageVector = Icons.Filled.Search,
-                    contentDescription = "Søk"
-                )
-            }
-        },
+
         colors = TopAppBarDefaults.smallTopAppBarColors(containerColor = Color.Transparent),
         modifier = modifier
     )
