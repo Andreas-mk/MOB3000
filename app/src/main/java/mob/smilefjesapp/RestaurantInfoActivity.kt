@@ -51,7 +51,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import mob.smilefjesapp.ui.theme.SmilefjesappTheme
 import android.util.Log
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import mob.smilefjesapp.dataklasse.ApiResponse
@@ -114,7 +120,7 @@ fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeCla
                     horizontalAlignment = Alignment.CenterHorizontally
                 )
                 {
-                    // Forteller bruker at søket ga 0 resultater
+                    // Forteller bruker at søket ga 0 resultater ELLER loading??
                     if(restaurantListe.isEmpty()){
                         Text(text = "Ditt søk ga 0 resultater", // Denne vises også før kortene lages når vi får svar
                             style = MaterialTheme.typography.headlineMedium)
@@ -125,23 +131,35 @@ fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeCla
                 }
             }
             WindowWidthSizeClass.Medium -> {
-                Row(
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxSize()
                         .padding(it)
+
                         .verticalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                        //.weight(1f),
+                    //horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    repeat(2) { // 2 kort ved siden av hverandre
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                    if (restaurantListe.isEmpty()) {
+                        Text(
+                            text = "Laster...", // Denne vises også før kortene lages når vi får svar
+                            style = MaterialTheme.typography.bodyMedium
                         )
-                        {
-                            LagKort(restaurantListe)
-                        }
+                    } else {
+                        /*restaurantListe.chunked(2) { chunk ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(it)
+                                    .weight(1f),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                            // Lager et kort for hvert element i lista
+                                chunk.forEach { restaurant ->
+                                    LagKort(restaurantListe)
+                                }
+                            }
+                        }*/
                     }
                 }
             }
@@ -225,11 +243,22 @@ fun InfoCard(navn: String,
             modifier= modifier
                 .background(MaterialTheme.colorScheme.primary)
                 .fillMaxWidth()
+                .animateContentSize(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioLowBouncy,
+                        stiffness = Spring.StiffnessHigh
+                    )
+                )
         )
         {
-            Row {
+            Row (
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ){
                 // Kolonner med Restaurant-navn, beliggenhet og smilefjesranking
-                Column {
+                Column (
+                    modifier = modifier.width(300.dp)
+                ){
                     Text(
                         text = navn,
                         modifier = Modifier.padding(5.dp),
@@ -245,7 +274,9 @@ fun InfoCard(navn: String,
                 }
                 Column (
                     //modifier = Modifier,
-                    //horizontalAlignment = Alignment.CenterHorizontally
+                    Modifier
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.End,
                 ){
                     // Setter farge på smilefjeset (basert på totalkarakter)
                     if(totalKarakter == "0" || totalKarakter == "1")
@@ -323,7 +354,7 @@ private fun UtvidButton(
     modifier: Modifier = Modifier
 ){
     IconButton(
-        onClick = { /*???*/ },
+        onClick = { /*???  expanded?*/ },
         modifier = modifier
     ) {
         Icon(
@@ -535,16 +566,29 @@ fun TopAppBarInfoCard(modifier: Modifier = Modifier){
                     contentDescription = "Tilbake"
                 ) }
         },
-        // Søkeknapp lar brukeren raskt søke blant kommunene
-        actions = {
-            IconButton(onClick = { /* do something */ }) {
-                Icon(imageVector = Icons.Filled.Search,
-                    contentDescription = "Søk"
-                ) }
-        },
         // Fjerner TopAppBars hvite bakgrunn
         colors = TopAppBarDefaults.smallTopAppBarColors(containerColor = Color.Transparent),
         modifier = modifier
     )
 }
 
+@Preview(showBackground = true)
+@Composable
+fun InfoCardPreview(){
+    SmilefjesappTheme {
+        InfoCard(
+            "Sjøormen Kro",
+            "3840",
+            "Seljord",
+            "Ingrid Slettens veg 20",
+            "1",
+            "Rutiner og ledelse",
+            "1",
+            "Lokaler og utstyr",
+            "2",
+            "Mat-håndtering og tilberedning",
+            "0",
+            "Merking og sporbarhet",
+            "1")
+        }
+}

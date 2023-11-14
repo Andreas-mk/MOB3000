@@ -161,7 +161,7 @@ fun Start(modifier: Modifier = Modifier, windowSizeClass : WindowSizeClass) {
                             .padding(5.dp)
                             .size(270.dp, 65.dp),
                         onClick = {
-                            localContext.startActivity(Intent(localContext, FavoritterActivity::class.java))
+                            localContext.startActivity(Intent(localContext, FavoritterActivity::class.java)) // HUSK BYTT FAVORITTER
                         }
                     ) {
                         Text(
@@ -200,10 +200,7 @@ fun Start(modifier: Modifier = Modifier, windowSizeClass : WindowSizeClass) {
                                 .weight(1f),
                             onClick = {
                                 localContext.startActivity(
-                                    Intent(
-                                        localContext,
-                                        FylkeActivity::class.java
-                                    )
+                                    Intent(localContext, FylkeActivity::class.java)
                                 )
                             }
                         ) {
@@ -212,32 +209,6 @@ fun Start(modifier: Modifier = Modifier, windowSizeClass : WindowSizeClass) {
                                 style = MaterialTheme.typography.headlineMedium
                             )
                         }
-                        Button(
-                            modifier = Modifier
-                                .padding(5.dp)
-                                .height(65.dp)
-                                .weight(1f),
-                            onClick = {
-                                localContext.startActivity(
-                                    Intent(
-                                        localContext,
-                                        KommuneActivity::class.java
-                                    )
-                                )
-                            }
-                        ) {
-                            Text(
-                                text = "Vis kommuner",
-                                style = MaterialTheme.typography.headlineMedium
-                            )
-                        }
-                    }
-                    Row (
-                        modifier = Modifier,
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ){
-                        //Søk()
-                        // Endre plasseringen? Slik at Textfield er over søkeknapp (som på stående skjerm)
                         TextField(
                             modifier = Modifier
                                 .padding(5.dp)
@@ -249,27 +220,13 @@ fun Start(modifier: Modifier = Modifier, windowSizeClass : WindowSizeClass) {
                             //colors = ContainerColor.toColor() // Bakgrunnsfarge for søkeboksen (funker ikke)
                             //containerColor: Color = FilledTextFieldTokens.ContainerColor.toColor(),
                         )
-                        Button(
-                            modifier = Modifier
-                                .padding(5.dp)
-                                .height(65.dp)
-                                .weight(1f),
-                            onClick = {
-                                //localContext.startActivity(Intent(localContext, KommuneActivity::class.java))
-                                // Hent info fra Textfield -> Send rett til info side om riktig restaurant
-                            }
-                        ) {
-                            Text(
-                                text = "Søk på restaurant",
-                                style = MaterialTheme.typography.headlineMedium
-                            )
-                        }
                     }
                     Row (
                         modifier = Modifier,
                         horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        // Flytte denne til en burgermeny? Ellers står den alene når Restaurant-info fjernes
+                    ){
+                        //Søk()
+                        // Endre plasseringen? Slik at Textfield er over søkeknapp (som på stående skjerm)
                         Button(
                             modifier = Modifier
                                 .padding(5.dp)
@@ -277,15 +234,12 @@ fun Start(modifier: Modifier = Modifier, windowSizeClass : WindowSizeClass) {
                                 .weight(1f),
                             onClick = {
                                 localContext.startActivity(
-                                    Intent(
-                                        localContext,
-                                        FavoritterActivity::class.java
-                                    )
+                                    Intent(localContext, FylkeActivity::class.java) // BYTT UT MED RestaurantInfoActivity og intent
                                 )
                             }
                         ) {
                             Text(
-                                text = "Favoritter",
+                                text = "GPS posisjon",
                                 style = MaterialTheme.typography.headlineMedium
                             )
                         }
@@ -295,11 +249,13 @@ fun Start(modifier: Modifier = Modifier, windowSizeClass : WindowSizeClass) {
                                 .height(65.dp)
                                 .weight(1f),
                             onClick = {
-                            localContext.startActivity(Intent(localContext, RestaurantInfoActivity::class.java))
+                                val intent = Intent(localContext, RestaurantInfoActivity::class.java)
+                                intent.putExtra("navn", text)/*TEKST FRA TEXTFIELD*/
+                                localContext.startActivity(intent)
                             }
                         ) {
                             Text(
-                                text = "Restaurant info",
+                                text = "Søk på restaurant",
                                 style = MaterialTheme.typography.headlineMedium
                             )
                         }
