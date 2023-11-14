@@ -25,27 +25,17 @@ private val retrofit = Retrofit.Builder()
     .build()
 interface RestaurantApiService{
     // Henter restauranter basert på brukerens valgte kommune
-    @GET("api/json/mattilsynet/smilefjes/tilsyn?") // postnr verdien endres utifra valgte kommune
+    @GET("api/json/mattilsynet/smilefjes/tilsyn?")
     // Legger til query for å hente poststed og bruker dette for å få riktig restaurant i kommune
     suspend fun hentRestauranter(
         @Query("poststed")poststed: String,
         @Query("page")page: Int
-        //@Header("X-Datahotel-Total-Pages")totaltAntPages: String //
     ): Response<ApiResponse>
-
-    // Henter headers slik at vi får vite antall pages vi får. Dette bruker vi for å kunne få data fra alle pages i APIet
-    // (APIet gir oss 100 restaurantobjekter per page) Brukes kun når man får restauranter fra fylke -> kommunesøk
-    // FJERN denne????
-    @HEAD("api/json/mattilsynet/smilefjes/tilsyn?")
-    suspend fun hentHeaders(@Query("poststed")poststed: String): Headers
-
 
     // Brukes når bruker søker på restaurant i søkefeltet
     @GET("api/json/mattilsynet/smilefjes/tilsyn?")
     suspend fun hentMedSøk(@Query("navn")navn: String): Response<ApiResponse>
-
 }
-
 object RestaurantApi {
     val retrofitService: RestaurantApiService by lazy {
         retrofit.create(RestaurantApiService::class.java)
