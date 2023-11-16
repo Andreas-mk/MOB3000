@@ -78,10 +78,7 @@ fun Start(modifier: Modifier = Modifier, windowSizeClass : WindowSizeClass) {
     val localContext = LocalContext.current
     val vinduBredde = windowSizeClass.widthSizeClass
     // Text i textfield (søkefelt)
-    //var text by rememberSaveable(stateSaver = TextFieldValue.Saver) {
-    //    mutableStateOf(TextFieldValue("", TextRange(0, 7)))
-    //}
-    var text by remember { mutableStateOf("") } // alternativt?
+    var text by rememberSaveable { mutableStateOf("") } // alternativt?
     Scaffold(topBar = { TopAppBar() }
     ) {
         when(vinduBredde){
@@ -107,7 +104,7 @@ fun Start(modifier: Modifier = Modifier, windowSizeClass : WindowSizeClass) {
                         contentDescription = ("Smilefjes-logo"),
                         Modifier.size(600.dp, 200.dp)
                     )
-
+                    // Elevated button? Ser kanskje litt finere ut
                     Button(
                         modifier = Modifier
                             .padding(5.dp)
@@ -161,7 +158,7 @@ fun Start(modifier: Modifier = Modifier, windowSizeClass : WindowSizeClass) {
                             .padding(5.dp)
                             .size(270.dp, 65.dp),
                         onClick = {
-                            localContext.startActivity(Intent(localContext, FavoritterActivity::class.java)) // HUSK BYTT FAVORITTER
+                            localContext.startActivity(Intent(localContext, RestaurantInfoActivity::class.java))
                         }
                     ) {
                         Text(
@@ -284,25 +281,6 @@ fun TopAppBar(modifier: Modifier = Modifier){
         modifier = modifier
     )
 }
-
-// Mulig vi lager egen searchbar med TextField og knapp
-@Composable
-fun Søk(){
-    //TextField(value = "test", onValueChange = )
-    /*
-    var text by rememberSaveable(stateSaver = TextFieldValue.Saver) {
-        mutableStateOf(TextFieldValue("example", TextRange(0, 7)))
-    }
-
-    TextField(
-        value = text,
-        onValueChange = { text = it },
-        label = { Text("Label") }
-    )
-
-     */
-}
-
 
 
 

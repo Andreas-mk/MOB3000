@@ -54,11 +54,18 @@ import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -85,8 +92,8 @@ class RestaurantInfoActivity : ComponentActivity() {
                     val tekstSøk = intent.getStringExtra("navn")
                     // Henter skjermstørrelsen. Skjermens bredde avgjør hvor mange kort vi viser pr rad
                     val windowSizeClass = calculateWindowSizeClass(this)
-
-                    RestaurantInfo(Modifier, windowSizeClass, valgtKommune, tekstSøk) // Bygger UI
+                    val vinduBredde = windowSizeClass.widthSizeClass
+                    RestaurantInfo(Modifier, vinduBredde, valgtKommune, tekstSøk) // Bygger UI
                     // gjør likt som med valgtKommune, bare sende med stringen bruker skriver inn i søkefelt i stedet
                     // gjør en if-sjekk på om valgtKommune eller søkefelt er null -> bygg gui etter svar på dette
                 }
@@ -96,17 +103,16 @@ class RestaurantInfoActivity : ComponentActivity() {
 }
 
 @SuppressLint("CoroutineCreationDuringComposition") // Får ikke launchet korutine uten denne (generert av Android Studio)
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class) // ToppAppBar
 @Composable
-fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeClass, valgtKommune: String?, tekstSøk: String?){
-    val vinduBredde = windowSizeClass.widthSizeClass
+fun RestaurantInfo(modifier: Modifier = Modifier, vinduBredde: WindowWidthSizeClass, valgtKommune: String?, tekstSøk: String?){
     val coroutineScope = rememberCoroutineScope()
-    var restaurantListe by remember {
-        mutableStateOf(emptyList<RestaurantInfo>())
+    var restaurantListe by rememberSaveable { // Saveable for at lista skal overleve skjermrotasjon MEN skjermen blir svart?
+        mutableStateOf(emptyList<RestaurantInfo>()) // Test dette med andre maskiner?
     }
     // Starter en korutine som henter restauranter fra Mattilsynets API
     coroutineScope.launch(Dispatchers.IO) {
-        val nyListe = hentRestauranter(valgtKommune, tekstSøk) // Vise et loading ikon eller lignende mens skjermen er tom?
+        val nyListe = hentRestauranter(valgtKommune, tekstSøk)
         restaurantListe = nyListe
     }
 
@@ -122,10 +128,24 @@ fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeCla
                     horizontalAlignment = Alignment.CenterHorizontally
                 )
                 {
+
                     // Forteller bruker at søket ga 0 resultater ELLER loading??
                     if(restaurantListe.isEmpty()){
-                        Text(text = "Laster...", // Denne vises også før kortene lages når vi får svar
-                            style = MaterialTheme.typography.headlineMedium)
+                        Spacer(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp)
+                        )
+                        // Animert loading-ikon som vises mens restauranter hentes (og kort bygges)
+                        // KILDE: https://developer.android.com/jetpack/compose/components/progress
+                        CircularProgressIndicator(
+                            modifier = Modifier.width(64.dp),
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                        /*
+                        Text(text = "", // Denne kan vises også før kortene lages når vi får svar
+                           style = MaterialTheme.typography.headlineMedium)
+                         */
                     } else {
                         // Lager et kort for hvert element i lista
                         LagKort(restaurantListe)
@@ -147,8 +167,12 @@ fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeCla
                     val delListe1: List<RestaurantInfo> = restaurantListe.subList(0, midten)
                     val delListe2: List<RestaurantInfo> = restaurantListe.subList(midten, restaurantListe.size)
 
-                    FlereKolonner(delListe1, modifier = Modifier.fillMaxWidth().weight(1f))
-                    FlereKolonner(delListe2, modifier = Modifier.fillMaxWidth().weight(1f))
+                    FlereKolonner(delListe1, modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f))
+                    FlereKolonner(delListe2, modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f))
                 }
             }
             WindowWidthSizeClass.Expanded -> {
@@ -157,22 +181,26 @@ fun RestaurantInfo(modifier: Modifier = Modifier, windowSizeClass: WindowSizeCla
                         .fillMaxWidth()
                         .padding(it)
                         .verticalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    // Samme som WindowWidthSizeClass.Medium, men her lager vi 4 kolonner for å bedre utnytte skjermen
-                    val førsteSkille = restaurantListe.size/4
-                    val andreSkille = restaurantListe.size/2
-                    val tredjeSkille = førsteSkille + andreSkille
+                    // Samme som WindowWidthSizeClass.Medium, men her lager vi 3 kolonner for å bedre utnytte skjermen
+                    val førsteSkille = restaurantListe.size/3
+                    val andreSkille = (restaurantListe.size/3) * 2
+                    //val tredjeSkille = førsteSkille + andreSkille
                     val delListe1: List<RestaurantInfo> = restaurantListe.subList(0, førsteSkille)
                     val delListe2: List<RestaurantInfo> = restaurantListe.subList(førsteSkille, andreSkille)
-                    val delListe3: List<RestaurantInfo> = restaurantListe.subList(andreSkille, tredjeSkille)
-                    val delListe4: List<RestaurantInfo> = restaurantListe.subList(tredjeSkille, restaurantListe.size)
+                    val delListe3: List<RestaurantInfo> = restaurantListe.subList(andreSkille, restaurantListe.size)
+                    //val delListe4: List<RestaurantInfo> = restaurantListe.subList(tredjeSkille, restaurantListe.size)
 
-                    FlereKolonner(delListe1, modifier = Modifier.fillMaxWidth().weight(1f))
-                    FlereKolonner(delListe2, modifier = Modifier.fillMaxWidth().weight(1f))
-                    FlereKolonner(delListe3, modifier = Modifier.fillMaxWidth().weight(1f))
-                    FlereKolonner(delListe4, modifier = Modifier.fillMaxWidth().weight(1f))
-
+                    FlereKolonner(delListe1, modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f))
+                    FlereKolonner(delListe2, modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f))
+                    FlereKolonner(delListe3, modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f))
                 }
             }
         }
@@ -363,12 +391,12 @@ private fun UtvidButton(
 ){
     IconButton(
         onClick = { /* expanded = !expanded */ },
-        modifier = modifier
+        modifier = modifier,
+        enabled = false // Bruker kan trykke hvor som helst på kortet for å utvide
     ) {
         Icon(
             imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-            contentDescription =
-            if (expanded) "Lukk" else "Utvid",
+            contentDescription = if (expanded) "Lukk utvidet kort" else "Utvid kort",
             tint = MaterialTheme.colorScheme.tertiary
         )
     }
@@ -390,10 +418,6 @@ fun UtvidInfo(
     karakter4: String,
     modifier: Modifier = Modifier
 ) {
-    var favoritt by remember { mutableStateOf(false) } // Husk å endre på denne?
-    /*
-    * Vis favorittside? I burgermeny?
-    * */
     Column(
         modifier= Modifier
             .padding(5.dp)
@@ -448,6 +472,12 @@ suspend fun hentRestauranter(valgtKommune: String?, tekstSøk: String?): List<Re
     try {
         val svar: Response<ApiResponse>
         var alleRestauranter: MutableList<RestaurantInfo> = mutableListOf() // bruker denne til å filtrere ut gamle tilsyn
+
+        if(valgtKommune == null && tekstSøk == null){
+            return emptyList() // Bruker har trykket søk på restaurant uten å skrive inn restaurant
+            // FUNKER IKKE, må utbedres
+        }
+
         // I appen er det to muligheter for å se restauranter. Hvis det ikke er den ene så er det den andre
         if(tekstSøk==null){
             // !! = not null assertion operator :
@@ -552,8 +582,6 @@ fun behandleSvar(apiSvar: ApiResponse, liste: MutableList<RestaurantInfo>): Muta
     }
     return liste
 }
-
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopAppBarInfoCard(modifier: Modifier = Modifier){
@@ -600,3 +628,23 @@ fun InfoCardPreview(){
             "1")
         }
 }
+/*
+// Får ikke vist restaurant-kortene
+
+@Preview(showBackground = true, widthDp = 750)
+@Composable
+fun RestaurantInfoMediumPreview(){
+    SmilefjesappTheme {
+        RestaurantInfo(Modifier, vinduBredde = WindowWidthSizeClass.Medium, "Fredrikstad" , null)
+    }
+}
+
+@Preview(showBackground = true, widthDp = 1000)
+@Composable
+fun RestaurantInfoExpandedPreview(){
+    SmilefjesappTheme {
+        RestaurantInfo(Modifier, vinduBredde = WindowWidthSizeClass.Expanded, "Fredrikstad" , null)
+    }
+}
+
+ */
