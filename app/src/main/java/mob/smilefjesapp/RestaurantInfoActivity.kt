@@ -596,8 +596,8 @@ fun TopAppBarInfoCard(modifier: Modifier = Modifier){
                 maxLines = 1
             )
         },
-        navigationIcon = {
-            IconButton(onClick = { localContext.startActivity(Intent(localContext, MainActivity::class.java)) }) {
+        navigationIcon = { // Avslutter aktivitet når bruker trykker på tilbakeknapp
+            IconButton(onClick = {(localContext as? ComponentActivity)?.finish()}) {
                 Icon(imageVector = Icons.Filled.ArrowBack,
                     contentDescription = "Tilbake"
                 ) }

@@ -174,7 +174,7 @@ fun TopAppBarKommune(modifier: Modifier = Modifier) {
             )
         },
         navigationIcon = {
-            IconButton(onClick = { localContext.startActivity(Intent(localContext, FylkeActivity::class.java)) }) {
+            IconButton(onClick = {(localContext as? ComponentActivity)?.finish()}) {
                 Icon(
                     imageVector = Icons.Filled.ArrowBack,
                     contentDescription = "Tilbake"

@@ -181,7 +181,7 @@ fun ToppAppBar(modifier: Modifier = Modifier) {
             )
         },
         navigationIcon = {
-                    IconButton(onClick = {localContext.startActivity(Intent(localContext, MainActivity::class.java))}) {
+                    IconButton(onClick = {(localContext as? ComponentActivity)?.finish()}) {
                         Icon(imageVector = Icons.Filled.ArrowBack,
                             contentDescription = "Tilbake")
                     }
