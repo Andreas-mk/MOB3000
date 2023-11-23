@@ -59,6 +59,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
@@ -78,6 +79,7 @@ import java.io.IOException
 import java.lang.Integer.parseInt
 
 class RestaurantInfoActivity : ComponentActivity() {
+
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -125,11 +127,11 @@ fun RestaurantInfo(modifier: Modifier = Modifier, vinduBredde: WindowWidthSizeCl
                         .fillMaxSize()
                         .padding(it)
                         .verticalScroll(rememberScrollState()),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+
                 )
                 {
-
-                    // Forteller bruker at søket ga 0 resultater ELLER loading??
+                    // Loading-ikon
                     if(restaurantListe.isEmpty()){
                         Spacer(
                             Modifier
@@ -142,10 +144,12 @@ fun RestaurantInfo(modifier: Modifier = Modifier, vinduBredde: WindowWidthSizeCl
                             modifier = Modifier.width(64.dp),
                             color = MaterialTheme.colorScheme.secondary
                         )
-                        /*
-                        Text(text = "", // Denne kan vises også før kortene lages når vi får svar
-                           style = MaterialTheme.typography.headlineMedium)
-                         */
+                        // Mutable Text som viser antall restauranter bruker kan se
+                        val antRestauranterTekst by remember {mutableStateOf("")}
+                        Text(
+                            text = antRestauranterTekst,
+                            style = MaterialTheme.typography.headlineMedium
+                        )
                     } else {
                         // Lager et kort for hvert element i lista
                         LagKort(restaurantListe)
@@ -167,12 +171,24 @@ fun RestaurantInfo(modifier: Modifier = Modifier, vinduBredde: WindowWidthSizeCl
                     val delListe1: List<RestaurantInfo> = restaurantListe.subList(0, midten)
                     val delListe2: List<RestaurantInfo> = restaurantListe.subList(midten, restaurantListe.size)
 
-                    FlereKolonner(delListe1, modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f))
-                    FlereKolonner(delListe2, modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f))
+                    if(restaurantListe.isEmpty()){
+
+                        CircularProgressIndicator(
+                            modifier = Modifier.width(64.dp),
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    } else {
+                        FlereKolonner(
+                            delListe1, modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        )
+                        FlereKolonner(
+                            delListe2, modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        )
+                    }
                 }
             }
             WindowWidthSizeClass.Expanded -> {
@@ -198,9 +214,11 @@ fun RestaurantInfo(modifier: Modifier = Modifier, vinduBredde: WindowWidthSizeCl
                     FlereKolonner(delListe2, modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f))
-                    FlereKolonner(delListe3, modifier = Modifier
+                    /*FlereKolonner(delListe3, modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f))
+
+                     */
                 }
             }
         }
@@ -473,26 +491,35 @@ suspend fun hentRestauranter(valgtKommune: String?, tekstSøk: String?): List<Re
         val svar: Response<ApiResponse>
         var alleRestauranter: MutableList<RestaurantInfo> = mutableListOf() // bruker denne til å filtrere ut gamle tilsyn
 
-        if(valgtKommune == null && tekstSøk == null){
-            return emptyList() // Bruker har trykket søk på restaurant uten å skrive inn restaurant
-            // FUNKER IKKE, må utbedres
-        }
+        if(valgtKommune == null && tekstSøk == ""){
+            // Bruker har trykket søk på restaurant uten å skrive inn restaurant.
+            // Sender man med en tom string i API-kallet vil vi få 44602 restaurant-objekter som svar
+            // Det klarer ikke appen vår å håndtere, dessuten ville det vært veldig tungvindt å scrolle
+            // gjennom 44602 restaurant-kort for å finne den man vil se.
+            return emptyList()
+            //svar = RestaurantApi.retrofitService.hentMedSøk(tekstSøk,1)
 
+        }
         // I appen er det to muligheter for å se restauranter. Hvis det ikke er den ene så er det den andre
-        if(tekstSøk==null){
+        else if(tekstSøk==null){
             // !! = not null assertion operator :
             svar = RestaurantApi.retrofitService.hentRestauranter(valgtKommune!!,1) // Vi henter alltid page 1 fra APIet først
         }
         else {
-            svar = RestaurantApi.retrofitService.hentMedSøk(tekstSøk)
+            svar = RestaurantApi.retrofitService.hentMedSøk(tekstSøk,1)
         }
         if (svar.isSuccessful) {
             val headers = svar.headers()
             val totalPages = headers["X-Datahotel-Total-Pages"]?.toInt() // Henter antall sider fra API headers (Pagination), parse til Int slik at vi kan bruke tallet i en løkke
-            val totalPosts = headers["X-Datahotel-Total-Posts"] // "Ditt søk ga $totaltPosts resultater" mens man venter på kortene?
+            val totalPosts = headers["X-Datahotel-Total-Posts"]?.toInt() // "Ditt søk ga $totaltPosts resultater" mens man venter på kortene?
             val apiSvar = svar.body()
             //Log.d("Svarsjekk", "Svar isSuccessful")
             if (apiSvar != null) {
+                if(totalPosts == 0){ // Ingen restauranter funnet
+                    //antRestauranterTekst = "Restauranter funnet: $totalPosts"
+                    Log.d("0 svar", "0 svar")
+                }
+
                 Log.d("Antall svar", "Antall restauranter: $totalPosts")
                 Log.d("HEADERS", " $totalPages")
                 val nyListe = behandleSvar(apiSvar, alleRestauranter)
@@ -501,7 +528,12 @@ suspend fun hentRestauranter(valgtKommune: String?, tekstSøk: String?): List<Re
                 // Paginering (?) Dersom det er flere enn 1 side i APIet må vi hente resten av sidene
                 if(totalPages != null && totalPages > 1){
                     for(i in 2..totalPages){ // starter på 2 siden vi allerede har hentet page 1
-                        val nestePage = RestaurantApi.retrofitService.hentRestauranter(valgtKommune!!,i)
+                        var nestePage: Response<ApiResponse>
+                        if(tekstSøk==null){
+                            nestePage = RestaurantApi.retrofitService.hentRestauranter(valgtKommune!!,i) // Vi henter alltid page 1 fra APIet først
+                        }else {
+                            nestePage = RestaurantApi.retrofitService.hentMedSøk(tekstSøk, i)
+                        }
                         if(nestePage.isSuccessful){
                             val pageSvar = nestePage.body()
                             if(pageSvar != null){
@@ -537,7 +569,6 @@ fun behandleSvar(apiSvar: ApiResponse, liste: MutableList<RestaurantInfo>): Muta
         var nyttTilsyn = false
 
         // If-sjekkene finner ut dette restaurant-tilsynet er det nyeste
-        // (Denne ser grusom ut, kan den forbedres????)
         if(!liste.any{it.orgnummer == restaurant.orgnummer}){
             nyttTilsyn = true
             liste.add(restaurant) // hvis ikke orgnummer finnes i lista legges restauranten inn uansett
@@ -576,7 +607,7 @@ fun behandleSvar(apiSvar: ApiResponse, liste: MutableList<RestaurantInfo>): Muta
         val verdi = liste.any{it.orgnummer == restaurant.orgnummer && nyttTilsyn}
         if(verdi){
             teller++
-            Log.d("????????", "Fant 1 tilfelle av samme orgnr ${restaurant.orgnummer} og DATO: ${restaurant.dato} TELLER: $teller")
+            Log.d("Funn", "Fant 1 tilfelle av samme orgnr ${restaurant.orgnummer} og DATO: ${restaurant.dato} TELLER: $teller")
             //nyListe.remove
         }
     }

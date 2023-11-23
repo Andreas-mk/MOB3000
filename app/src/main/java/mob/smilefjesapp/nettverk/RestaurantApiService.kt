@@ -34,7 +34,10 @@ interface RestaurantApiService{
 
     // Brukes når bruker søker på restaurant i søkefeltet
     @GET("api/json/mattilsynet/smilefjes/tilsyn?")
-    suspend fun hentMedSøk(@Query("navn")navn: String): Response<ApiResponse>
+    suspend fun hentMedSøk(
+        @Query("navn")navn: String,
+        @Query("page")page: Int
+    ): Response<ApiResponse>
 }
 object RestaurantApi {
     val retrofitService: RestaurantApiService by lazy {
