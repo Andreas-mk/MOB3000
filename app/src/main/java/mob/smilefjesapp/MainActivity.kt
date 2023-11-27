@@ -1,8 +1,14 @@
 package mob.smilefjesapp
 
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.drawable.Icon
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -51,32 +57,200 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.google.android.material.search.SearchBar
 import mob.smilefjesapp.ui.theme.SmilefjesappTheme
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.setContent
+import androidx.compose.runtime.MutableState
+import androidx.core.content.ContextCompat
 
+//
 class MainActivity : ComponentActivity() {
+    private lateinit var locationManager: LocationManager
+
+    public var minPosisjon: Location? = null
+
+    public val locationPermissions = arrayOf(
+        android.Manifest.permission.ACCESS_FINE_LOCATION,
+        android.Manifest.permission.ACCESS_COARSE_LOCATION
+    )
+
+    private var tillatelserGitt: Boolean = false
+
+    // ActivityResultLauncher med callback-funksjon
+    // Brukes i sjekkTillatelser() for å starte systemdialogen som ber bruker gi rettigheter.
+    val locationPermissionRequest =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions())
+        { permissions ->
+            when {
+                permissions.getOrDefault(android.Manifest.permission.ACCESS_FINE_LOCATION, false)   -> {
+                    // Precise location access granted.
+                    tillatelserGitt=true
+                }
+                permissions.getOrDefault(android.Manifest.permission.ACCESS_COARSE_LOCATION, false) -> {
+                    // Only approximate location access granted.
+                    tillatelserGitt=true
+                }
+                // No location access granted.
+                else -> tillatelserGitt=false
+            }
+        }
+
+
+    public fun sjekkTillatelser() {
+        when {
+            ContextCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                // You can use the API that requires the permission.
+                tillatelserGitt=true
+            }
+            else -> {
+                // Overlat til Andoroid OS å spørre etter tillatelse.
+                // ActivityResultCallback mottar og behandler resultatet.
+                locationPermissionRequest.launch(locationPermissions)
+            }
+        }
+    }
+    // --------------------------------------
+     public fun finnSistePosisjon(context: Context, locationManager: LocationManager): Location?
+    {
+        val locationProvider=LocationManager.GPS_PROVIDER
+        var minPosisjon: Location? = null
+        if (ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            )
+            == PackageManager.PERMISSION_GRANTED)
+        {
+            if (locationManager.isProviderEnabled(locationProvider))
+                minPosisjon = locationManager.getLastKnownLocation(locationProvider)
+            /*
+                    fusedLocationClient.lastLocation
+                        .addOnSuccessListener { location : Location? ->
+                            // Got last known location. In some rare situations this can be null.
+                            posisjon = location
+                        }
+
+         */
+            else  Log.d("finnSistePosisjon", "GPS er ikke aktivert.")
+        }
+        else Log.d("finnSistePosisjon","Ikke tillatelse")
+        return minPosisjon
+    }
+    // ------------------------
+    public fun lyttPåPosisjon(locationManager: LocationManager?, posisjonState: MutableState<Location?>) : LocationListener?
+    {
+        val TID = 1000.toLong() // Tid mellom hver GPS avlesning i ms
+        val AVSTAND = 0.toFloat() // Minste avstand mellom hver GPS avlesning i meter
+
+        val locationProvider = LocationManager.GPS_PROVIDER
+        var lytter: Boolean = false
+
+        // Lytteobjekt/metode for endring i lokasjon
+        val locationListener: LocationListener = object : LocationListener {
+            override fun onLocationChanged(location: Location) {
+                posisjonState.value = location
+            }
+        }
+
+        // Aktiver lytting på endring i GPS-posisjon
+        if (locationManager!!.isProviderEnabled(locationProvider)) {
+            try {
+                locationManager.requestLocationUpdates(
+                    locationProvider,
+                    TID,
+                    AVSTAND,
+                    locationListener
+                )
+                lytter=true
+            } catch (e: SecurityException) {
+                e.printStackTrace()
+                lytter=false
+            }
+        }
+        if (lytter)
+            return locationListener
+        else
+            return null
+    }
+
+    // -------------------------------------
+
+    public fun stoppGpsLytting(locationManager: LocationManager, locationListener: LocationListener)
+    {
+        val locationProvider = LocationManager.GPS_PROVIDER
+        if (locationManager.isProviderEnabled(locationProvider)) {
+            locationManager.removeUpdates(locationListener)
+        }
+    }
+
+
+
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        locationManager = this.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
         setContent {
             SmilefjesappTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
+
                 ) {
+
                     val windowSizeClass = calculateWindowSizeClass(this)
+                    sjekkTillatelser()
+                    //val pos = finnSistePosisjon()
+
+
+
+
+
                     Start(Modifier, windowSizeClass)
                 }
 
             }
         }
     }
+
+    // må prøve å Hente ut min posisijon for å se hva som kommer ut av den
+    @Composable
+    fun GPS_Demo(
+        modifier: Modifier = Modifier,
+        lokasjonsTillatelserGitt: Boolean,
+        locationManager: LocationManager?
+    ) {
+        val context = LocalContext.current
+
+        val minPosisjonState: MutableState<Location?> = remember {  mutableStateOf(null)  }
+        val lytterPåGpsState = remember {  mutableStateOf(false)  }
+        val locationListenerState: MutableState<LocationListener?> = remember{ mutableStateOf(null)}
+
+        if (lokasjonsTillatelserGitt && locationManager!=null) {
+            minPosisjonState.value = finnSistePosisjon(context, locationManager)
+            //lytter.value = lyttPåPosisjon(locationManager, minPosisjon)
+        }
+
+        Log.d("", minPosisjonState.value.toString())
+    }
 }
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Start(modifier: Modifier = Modifier, windowSizeClass : WindowSizeClass) {
+fun Start(modifier: Modifier = Modifier, windowSizeClass : WindowSizeClass, ) {
     val localContext = LocalContext.current
     val vinduBredde = windowSizeClass.widthSizeClass
+
+    // GPS TEST
+
+
+
+
     // Text i textfield (søkefelt)
     var text by rememberSaveable { mutableStateOf("") } // alternativt?
     Scaffold(topBar = { TopAppBar() }
@@ -158,7 +332,17 @@ fun Start(modifier: Modifier = Modifier, windowSizeClass : WindowSizeClass) {
                             .padding(5.dp)
                             .size(270.dp, 65.dp),
                         onClick = {
-                            localContext.startActivity(Intent(localContext, RestaurantInfoActivity::class.java))
+                            //localContext.startActivity(Intent(localContext, RestaurantInfoActivity::class.java))
+                            Log.d("", "$")
+
+                            /* hvor skal kallet på metoden flyttesv
+                            GPS_Demo(
+                                modifier=Modifier,
+                                lokasjonsTillatelserGitt = false,
+                                locationManager = null
+                            )*/
+
+
                         }
                     ) {
                         Text(
@@ -230,9 +414,12 @@ fun Start(modifier: Modifier = Modifier, windowSizeClass : WindowSizeClass) {
                                 .height(65.dp)
                                 .weight(1f),
                             onClick = {
-                                localContext.startActivity(
+                                /*localContext.startActivity(
                                     Intent(localContext, FylkeActivity::class.java) // BYTT UT MED RestaurantInfoActivity og intent
-                                )
+                                )*/
+
+                                // Må kanskje lage en aktivitet som på de andre, og lage en klasse som henter posisjonen kanskje?
+
                             }
                         ) {
                             Text(
@@ -262,6 +449,13 @@ fun Start(modifier: Modifier = Modifier, windowSizeClass : WindowSizeClass) {
         }
     }
 }
+
+
+
+fun finnSistePosisjon() {
+    TODO("Not yet implemented")
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopAppBar(modifier: Modifier = Modifier){
@@ -281,6 +475,7 @@ fun TopAppBar(modifier: Modifier = Modifier){
         modifier = modifier
     )
 }
+
 
 
 
