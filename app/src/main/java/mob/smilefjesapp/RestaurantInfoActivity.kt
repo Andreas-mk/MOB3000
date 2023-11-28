@@ -92,6 +92,9 @@ class RestaurantInfoActivity : ComponentActivity() {
                 ) {
                     val valgtKommune = intent.getStringExtra("valgtKommune")
                     val tekstSøk = intent.getStringExtra("navn")
+                    val lat = intent.getStringExtra("lat")
+                    val long = intent.getStringExtra("long")
+
                     // Henter skjermstørrelsen. Skjermens bredde avgjør hvor mange kort vi viser pr rad
                     val windowSizeClass = calculateWindowSizeClass(this)
                     val vinduBredde = windowSizeClass.widthSizeClass
