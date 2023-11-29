@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 
 /**
- * Dataklasse med verdiene som hentes fra JSON-data (fra APIet).
+ * Dataklasse med verdiene som hentes fra JSON-data (fra Smilefjes-APIet).
  * Dette er all dataen vi presenterer om restaurantene.
  * Fra APIet får vi et "entries" objekt som inneholder liste med restaurantobjekter.
  */

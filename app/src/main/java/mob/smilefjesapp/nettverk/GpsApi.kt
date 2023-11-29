@@ -9,13 +9,16 @@ import retrofit2.Retrofit
 import retrofit2.http.GET
 import retrofit2.http.Query
 
+/**
+ * Retrofit ApiService oppsett tilpasset søk på kommune med koordinater
+ * */
+
 val formatGPS = Json {ignoreUnknownKeys = true}
 private const val BASE_URL = "https://ws.geonorge.no/"
 private val retrofit = Retrofit.Builder()
     .addConverterFactory(formatGPS.asConverterFactory("application/json".toMediaType()))
     .baseUrl(BASE_URL)
     .build()
-
 
 interface FylkerOgKommuner {
     @GET("kommuneinfo/v1/punkt?")

@@ -58,37 +58,33 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import mob.smilefjesapp.dataklasse.GpsKommune
 import mob.smilefjesapp.nettverk.FylkerOgKommunerApi
-import okhttp3.internal.wait
 import retrofit2.Response
 
-//
+/**
+ * Klassen fungerer som en hovedmeny.
+ * Henting av posisjon fra GPS håndteres også her.
+ */
 class MainActivity : ComponentActivity() {
     private lateinit var locationManager: LocationManager
-
-    public var minPosisjon: Location? = null
-
-    public val locationPermissions = arrayOf(
+    val locationPermissions = arrayOf(
         android.Manifest.permission.ACCESS_FINE_LOCATION,
         android.Manifest.permission.ACCESS_COARSE_LOCATION
     )
-
     private var tillatelserGitt: Boolean = false
 
-    // ActivityResultLauncher med callback-funksjon
-    // Brukes i sjekkTillatelser() for å starte systemdialogen som ber bruker gi rettigheter.
+    // Sjekker om bruker har gitt tillatelse til å dele posisjon
     val locationPermissionRequest =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions())
         { permissions ->
             when {
                 permissions.getOrDefault(android.Manifest.permission.ACCESS_FINE_LOCATION, false)   -> {
-                    // Precise location access granted.
+                    // Nøyaktig posisjon gitt
                     tillatelserGitt=true
                 }
                 permissions.getOrDefault(android.Manifest.permission.ACCESS_COARSE_LOCATION, false) -> {
-                    // Only approximate location access granted.
+                    // Wifi / mobilnett posisjon gitt
                     tillatelserGitt=true
                 }
-                // No location access granted.
                 else -> tillatelserGitt=false
             }
         }
@@ -101,49 +97,40 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             SmilefjesappTheme {
-                // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
-
                     ) {
-
                     val windowSizeClass = calculateWindowSizeClass(this)
                     sjekkTillatelser()
-                    val context = LocalContext.current
-                    val pos = finnSistePosisjon(context, locationManager)
-
                     Start(
                         Modifier,
                         windowSizeClass,
                         lokasjonsTillatelserGitt = tillatelserGitt,
-                        //fusedLocationClient=fusedLocationClient,
-                        locationManager = locationManager)
+                        locationManager = locationManager
+                    )
                 }
 
             }
         }
     }
 
-
-    public fun sjekkTillatelser() {
+    fun sjekkTillatelser() {
         when {
             ContextCompat.checkSelfPermission(
                 this,
                 android.Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED -> {
-                // You can use the API that requires the permission.
+                // Bruker har gitt tillatelse.
                 tillatelserGitt=true
             }
             else -> {
-                // Overlat til Andoroid OS å spørre etter tillatelse.
-                // ActivityResultCallback mottar og behandler resultatet.
+                // Spør om tillatelse
                 locationPermissionRequest.launch(locationPermissions)
             }
         }
     }
 }
-// --------------------------------------
  private fun finnSistePosisjon(context: Context, locationManager: LocationManager): Location?
 {
     val locationProvider=LocationManager.GPS_PROVIDER
@@ -154,39 +141,30 @@ class MainActivity : ComponentActivity() {
         )
         == PackageManager.PERMISSION_GRANTED)
     {
-        if (locationManager.isProviderEnabled(locationProvider)){
+        if (locationManager.isProviderEnabled(locationProvider))
             minPosisjon = locationManager.getLastKnownLocation(locationProvider)
-
-        /*
-                fusedLocationClient.lastLocation
-                    .addOnSuccessListener { location : Location? ->
-                        // Got last known location. In some rare situations this can be null.
-                        posisjon = location
-                    }
-
-     */}
         else  Log.d("finnSistePosisjon", "GPS er ikke aktivert.")
     }
     else Log.d("finnSistePosisjon","Ikke tillatelse")
     return minPosisjon
 }
-// ------------------------
+
 private fun lyttPåPosisjon(locationManager: LocationManager?, posisjonState: MutableState<Location?>) : LocationListener?
 {
-    val TID = 10.toLong() // Tid mellom hver GPS avlesning i ms
-    val AVSTAND = 0.toFloat() // Minste avstand mellom hver GPS avlesning i meter
+    val TID = 10.toLong() // Mellom hver avlesning av GPSen går det 10ms
+    val AVSTAND = 0.toFloat() // Minimum 0 meter mellom hver avlesning av GPS
 
     val locationProvider = LocationManager.GPS_PROVIDER
-    var lytter: Boolean = false
+    var lytter = false
 
     // Lytteobjekt/metode for endring i lokasjon
-    val locationListener: LocationListener = object : LocationListener {
+    val locationListener: LocationListener = object: LocationListener {
         override fun onLocationChanged(location: Location) {
             posisjonState.value = location
         }
     }
 
-    // Aktiver lytting på endring i GPS-posisjon
+    // Aktiverer lytting på endring i GPS-posisjon
     if (locationManager!!.isProviderEnabled(locationProvider)) {
         try {
             locationManager.requestLocationUpdates(
@@ -207,8 +185,6 @@ private fun lyttPåPosisjon(locationManager: LocationManager?, posisjonState: Mu
         return null
 }
 
-// -------------------------------------
-
 fun stoppGpsLytting(locationManager: LocationManager, locationListener: LocationListener)
 {
     val locationProvider = LocationManager.GPS_PROVIDER
@@ -216,34 +192,6 @@ fun stoppGpsLytting(locationManager: LocationManager, locationListener: Location
         locationManager.removeUpdates(locationListener)
     }
 }
-
-
-
-
-
-
-
-// må prøve å Hente ut min posisijon for å se hva som kommer ut av den
-@Composable
-fun GPS_Demo(
-    modifier: Modifier = Modifier,
-    lokasjonsTillatelserGitt: Boolean,
-    locationManager: LocationManager?
-) {
-    val context = LocalContext.current
-
-    val minPosisjonState: MutableState<Location?> = remember {  mutableStateOf(null)  }
-    val lytterPåGpsState = remember {  mutableStateOf(false)  }
-    val locationListenerState: MutableState<LocationListener?> = remember{ mutableStateOf(null)}
-
-    if (lokasjonsTillatelserGitt && locationManager!=null) {
-        minPosisjonState.value = finnSistePosisjon(context, locationManager)
-        //lytter.value = lyttPåPosisjon(locationManager, minPosisjon)
-    }
-
-    Log.d("", minPosisjonState.value.toString())
-}
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -256,7 +204,6 @@ fun Start(
     val localContext = LocalContext.current
     val gpsContext = LocalContext.current
     val vinduBredde = windowSizeClass.widthSizeClass
-    //Log.d("POSISJON", "$posisjon")
 
     // GPS TEST
     val minPosisjonState: MutableState<Location?> = remember {  mutableStateOf(null)  }
@@ -264,41 +211,35 @@ fun Start(
     val locationListenerState: MutableState<LocationListener?> = remember{ mutableStateOf(null)}
     if (lokasjonsTillatelserGitt && locationManager!=null) {
         minPosisjonState.value = finnSistePosisjon(localContext, locationManager)
-        //lytter.value = lyttPåPosisjon(locationManager, minPosisjon)
     }
 
     var gpsSvar: Response<GpsKommune>
     val coroutineScope = rememberCoroutineScope()
-
-
     // Text i textfield (søkefelt)
     var text by rememberSaveable { mutableStateOf("") } // alternativt?
+
     Scaffold(topBar = { TopAppBar() }
     ) {
         when(vinduBredde){
             WindowWidthSizeClass.Compact -> {
                 Column(
                     modifier = Modifier
-                        //.fillMaxSize()
                         .padding(it)
                         .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
 
                 ) {
-
                     Divider(
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(3.dp)
                     )
-
                     Image(
                         painter = painterResource(id = R.drawable.smilefjes),
                         contentDescription = ("Smilefjes-logo"),
                         Modifier.size(600.dp, 200.dp)
                     )
-                    // Elevated button? Ser kanskje litt finere ut
                     Button(
                         modifier = Modifier
                             .padding(5.dp)
@@ -317,23 +258,19 @@ fun Start(
                             .fillMaxWidth()
                             .padding(20.dp)
                     )
-                    //Søk()
                     TextField(
                         value = text,
                         onValueChange = { text = it },
                         label = { Text("Restaurantsøk") }
-                        //colors = ContainerColor.toColor() // Bakgrunnsfarge for søkeboksen (funker ikke)
-                        //containerColor: Color = FilledTextFieldTokens.ContainerColor.toColor(),
                     )
                     Button(
                         modifier = Modifier
                             .padding(5.dp)
                             .size(270.dp, 65.dp),
                         onClick = {
-                            //localContext.startActivity(Intent(localContext, KommuneActivity::class.java))
                             // Hent info fra Textfield -> Send rett til info side om riktig restaurant
                             val intent = Intent(localContext, RestaurantInfoActivity::class.java)
-                            intent.putExtra("navn", text)/*TEKST FRA TEXTFIELD*/
+                            intent.putExtra("navn", text) // text er fra textfield
                             localContext.startActivity(intent)
                         }
                     ) {
@@ -352,9 +289,8 @@ fun Start(
                             .padding(5.dp)
                             .size(270.dp, 65.dp),
                         onClick = {
-                            /* Starter lytting og avslutter lytting*/
+                            // Starter og avslutter lytting
                             lytterPåGpsState.value=false // funker når denne er plasert her
-                            //localContext.startActivity(Intent(localContext, RestaurantInfoActivity::class.java))
                             if (locationManager!=null) {
                                 if (!lytterPåGpsState.value) {
                                     // Start lytting på posisjon
@@ -372,32 +308,23 @@ fun Start(
                                     }
                                 }
                             }
-
                             val minPosisjon = minPosisjonState.value
                             val lat = minPosisjon?.latitude?.toString()
                             val long = minPosisjon?.longitude?.toString()
-                            Log.d("O_O", "LAT: $lat LONG: $long")
 
-
+                            // Gjør et API kall som finner hvilken kommune de oppgitte koordinatene befinner seg i
                             if (lat != null && long != null){
-
                                 coroutineScope.launch(Dispatchers.IO) {
+                                    // 4258 er SRID for koordinatsystemet som passer til koordinatene våre (Oppgitt av Kartverket)
                                     gpsSvar = FylkerOgKommunerApi.retrofitService.foKSammen(lat,long,"4258")
-                                    Log.d("før GPS", "$gpsSvar")
                                     if (gpsSvar.isSuccessful) {
                                         val body = gpsSvar.body()!!
-                                        Log.d("GPS SUCCESFYL", "HERJFDGZLZDKHGZE")
-                                        //if (body != null) {
-                                            //val kommune = body.kommunenavn
-                                            val intent = Intent(gpsContext, RestaurantInfoActivity::class.java)
-                                            intent.putExtra("valgtKommune", body.kommunenavn)
-                                            gpsContext.startActivity(intent)
-                                        //}
+                                        val intent = Intent(gpsContext, RestaurantInfoActivity::class.java)
+                                        intent.putExtra("valgtKommune", body.kommunenavn)
+                                        gpsContext.startActivity(intent)
                                     }
                                 }
-
-                        }
-
+                            }
                         }
                     ) {
                         Text(
@@ -409,11 +336,9 @@ fun Start(
             }else -> {
                 Column(
                     modifier = Modifier
-                        //.fillMaxSize()
                         .padding(it)
                         .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
-
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.smilefjes),
@@ -453,70 +378,58 @@ fun Start(
                             value = text,
                             onValueChange = { text = it },
                             label = { Text("Restaurantsøk") }
-                            //colors = ContainerColor.toColor() // Bakgrunnsfarge for søkeboksen (funker ikke)
-                            //containerColor: Color = FilledTextFieldTokens.ContainerColor.toColor(),
                         )
                     }
                     Row (
                         modifier = Modifier,
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ){
-                        //Søk()
-                        // Endre plasseringen? Slik at Textfield er over søkeknapp (som på stående skjerm)
                         Button(
                             modifier = Modifier
                                 .padding(5.dp)
                                 .height(65.dp)
                                 .weight(1f),
                             onClick = {
-                                // Det funker hvis vi legger denne her
+                                /* Det samme skal skje dersom man trykker på "Din posijon" i stående/liggende format.
+                                   Derfor er de to onClick parameterne det samme. Dette burde være i en egen funksjon for
+                                   å spare linjer med koder, men vi fikk problemer da det er verdier i
+                                   Start() vi ikke fikk oppdatert i den nye funksjonen.
+                                 */
+
                                 lytterPåGpsState.value=false
                                 if (locationManager!=null) {
                                     if (!lytterPåGpsState.value) {
-                                        // Start lytting på posisjon
                                         locationListenerState.value=lyttPåPosisjon(locationManager, minPosisjonState)
                                         lytterPåGpsState.value =  (locationListenerState.value != null)
                                     }
                                     else {
-                                        // Stopp lytting på posisjon
                                         if (locationListenerState.value != null) {
                                             stoppGpsLytting(
                                                 locationManager,
                                                 locationListenerState.value as LocationListener
                                             )
-
                                         }
                                     }
                                 }
-
                                 val minPosisjon = minPosisjonState.value
                                 val lat = minPosisjon?.latitude?.toString()
                                 val long = minPosisjon?.longitude?.toString()
-                                Log.d("O_O", "LAT: $lat LONG: $long")
-
 
                                 if (lat != null && long != null){
-
                                     coroutineScope.launch(Dispatchers.IO) {
                                         gpsSvar = FylkerOgKommunerApi.retrofitService.foKSammen(lat,long,"4258")
-                                        Log.d("før GPS", "$gpsSvar")
                                         if (gpsSvar.isSuccessful) {
                                             val body = gpsSvar.body()!!
-                                            Log.d("GPS SUCCESFYL", "HERJFDGZLZDKHGZE")
-
                                             val intent = Intent(gpsContext, RestaurantInfoActivity::class.java)
                                             intent.putExtra("valgtKommune", body.kommunenavn)
                                             gpsContext.startActivity(intent)
-
                                         }
                                     }
-
                                 }
-
                             }
                         ) {
                             Text(
-                                text = "GPS posisjon",
+                                text = "Din posisjon",
                                 style = MaterialTheme.typography.headlineMedium
                             )
                         }
@@ -543,11 +456,9 @@ fun Start(
     }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopAppBar(modifier: Modifier = Modifier){
-    val localContext = LocalContext.current
     // Top App Bar for enkel oversikt og navigasjon
     CenterAlignedTopAppBar(
         title = {
@@ -563,23 +474,4 @@ fun TopAppBar(modifier: Modifier = Modifier){
         modifier = modifier
     )
 }
-/*
-fun lokasjon(){
-    val locationPermissionRequest = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions())
-    { permissions ->
-        when {
-            permissions.getOrDefault(android.Manifest.permission.ACCESS_FINE_LOCATION, false) -> {
-// Bruker har gitt tillatelse til å bruke nøyaktig posisjon (GPS)
-            }
-            permissions.getOrDefault(android.Manifest.permission.ACCESS_COARSE_LOCATION, false) -> {
-// Bruker har bare gitt tillatelse til å bruke omtrentlig posisjon (WiFi / mobil)
-            }
-            else -> {
-// Bruker har ikke gitt tillatelse til å bruke posisjon
-            }
-        }
-}
-
- */
-
 

@@ -7,14 +7,10 @@ import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFact
 import mob.smilefjesapp.dataklasse.ApiResponse
 import retrofit2.Response
 import retrofit2.http.GET
-import retrofit2.http.HEAD
-import retrofit2.http.Header
-import retrofit2.http.Headers
 import retrofit2.http.Query
 
-
 /**
- * Standard Retrofit ApiService oppsett (mars photo codelaben / powerpoint)
+ * Standard Retrofit ApiService oppsett med funksjoner for API kall med poststed og restaurant-navn
  */
 // Det finnes flere Keys i datasettet vi ikke trenger (feks de samme kategoriene, men på nynorsk), derfor ignorerer vi disse.
 val format = Json {ignoreUnknownKeys = true} // Kilde https://github.com/Kotlin/kotlinx.serialization/blob/master/docs/json.md#ignoring-unknown-keys / https://github.com/Kotlin/kotlinx.serialization/blob/master/guide/example/example-json-03.kt APA 7 ???

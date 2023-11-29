@@ -1,7 +1,6 @@
 package mob.smilefjesapp
 
 import android.annotation.SuppressLint
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -22,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -34,7 +32,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
@@ -54,16 +51,8 @@ import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -78,6 +67,9 @@ import retrofit2.Response
 import java.io.IOException
 import java.lang.Integer.parseInt
 
+/**
+ * Denne activityen håndterer UIet som vises når bruker skal få presentert smilefjestilsyn fra Mattilsynets API.
+ */
 class RestaurantInfoActivity : ComponentActivity() {
 
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
@@ -85,22 +77,17 @@ class RestaurantInfoActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             SmilefjesappTheme {
-                // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val valgtKommune = intent.getStringExtra("valgtKommune")
                     val tekstSøk = intent.getStringExtra("navn")
-                    val lat = intent.getStringExtra("lat")
-                    val long = intent.getStringExtra("long")
 
                     // Henter skjermstørrelsen. Skjermens bredde avgjør hvor mange kort vi viser pr rad
                     val windowSizeClass = calculateWindowSizeClass(this)
                     val vinduBredde = windowSizeClass.widthSizeClass
                     RestaurantInfo(Modifier, vinduBredde, valgtKommune, tekstSøk) // Bygger UI
-                    // gjør likt som med valgtKommune, bare sende med stringen bruker skriver inn i søkefelt i stedet
-                    // gjør en if-sjekk på om valgtKommune eller søkefelt er null -> bygg gui etter svar på dette
                 }
             }
         }
@@ -112,8 +99,8 @@ class RestaurantInfoActivity : ComponentActivity() {
 @Composable
 fun RestaurantInfo(modifier: Modifier = Modifier, vinduBredde: WindowWidthSizeClass, valgtKommune: String?, tekstSøk: String?){
     val coroutineScope = rememberCoroutineScope()
-    var restaurantListe by rememberSaveable { // Saveable for at lista skal overleve skjermrotasjon MEN skjermen blir svart?
-        mutableStateOf(emptyList<RestaurantInfo>()) // Test dette med andre maskiner?
+    var restaurantListe by rememberSaveable { // Saveable for at lista skal overleve skjermrotasjon
+        mutableStateOf(emptyList<RestaurantInfo>())
     }
     // Starter en korutine som henter restauranter fra Mattilsynets API
     coroutineScope.launch(Dispatchers.IO) {
@@ -123,6 +110,9 @@ fun RestaurantInfo(modifier: Modifier = Modifier, vinduBredde: WindowWidthSizeCl
 
     Scaffold (topBar = {TopAppBarInfoCard()}
         ) {
+        /*
+            Hva brukeren ser kommer an
+        */
         when (vinduBredde) {
             WindowWidthSizeClass.Compact -> {
                 Column(
@@ -141,13 +131,15 @@ fun RestaurantInfo(modifier: Modifier = Modifier, vinduBredde: WindowWidthSizeCl
                                 .fillMaxWidth()
                                 .padding(20.dp)
                         )
-                        // Animert loading-ikon som vises mens restauranter hentes (og kort bygges)
+                        // Animert loading-ikon som vises mens restauranter hentes
                         // KILDE: https://developer.android.com/jetpack/compose/components/progress
                         CircularProgressIndicator(
                             modifier = Modifier.width(64.dp),
                             color = MaterialTheme.colorScheme.secondary
                         )
-                        // Mutable Text som viser antall restauranter bruker kan se
+                        // Mutable Text som viser antall restauranter bruker kan se.
+                        // Vi får antall restauranter som en header i Api response og skulle gjerne vist dette
+                        // til bruker mens appen laster, men vi får ikke oppdatert denne verdien med headeren fra APIet.
                         val antRestauranterTekst by remember {mutableStateOf("")}
                         Text(
                             text = antRestauranterTekst,
@@ -175,7 +167,6 @@ fun RestaurantInfo(modifier: Modifier = Modifier, vinduBredde: WindowWidthSizeCl
                     val delListe2: List<RestaurantInfo> = restaurantListe.subList(midten, restaurantListe.size)
 
                     if(restaurantListe.isEmpty()){
-
                         CircularProgressIndicator(
                             modifier = Modifier.width(64.dp),
                             color = MaterialTheme.colorScheme.secondary
@@ -205,23 +196,33 @@ fun RestaurantInfo(modifier: Modifier = Modifier, vinduBredde: WindowWidthSizeCl
                     // Samme som WindowWidthSizeClass.Medium, men her lager vi 3 kolonner for å bedre utnytte skjermen
                     val førsteSkille = restaurantListe.size/3
                     val andreSkille = (restaurantListe.size/3) * 2
-                    //val tredjeSkille = førsteSkille + andreSkille
+
                     val delListe1: List<RestaurantInfo> = restaurantListe.subList(0, førsteSkille)
                     val delListe2: List<RestaurantInfo> = restaurantListe.subList(førsteSkille, andreSkille)
                     val delListe3: List<RestaurantInfo> = restaurantListe.subList(andreSkille, restaurantListe.size)
-                    //val delListe4: List<RestaurantInfo> = restaurantListe.subList(tredjeSkille, restaurantListe.size)
 
-                    FlereKolonner(delListe1, modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f))
-                    FlereKolonner(delListe2, modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f))
-                    /*FlereKolonner(delListe3, modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f))
-
-                     */
+                    if(restaurantListe.isEmpty()){
+                        CircularProgressIndicator(
+                            modifier = Modifier.width(90.dp),
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    } else {
+                        FlereKolonner(
+                            delListe1, modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        )
+                        FlereKolonner(
+                            delListe2, modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        )
+                        FlereKolonner(
+                            delListe3, modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        )
+                    }
                 }
             }
         }
@@ -314,7 +315,7 @@ fun InfoCard(navn: String,
             ){
                 // Kolonner med Restaurant-navn, beliggenhet og smilefjesranking
                 Column (
-                    modifier = modifier.width(300.dp)
+                    modifier = modifier.width(250.dp)
                 ){
                     Text(
                         text = navn,
@@ -330,7 +331,6 @@ fun InfoCard(navn: String,
                     )
                 }
                 Column (
-                    //modifier = Modifier,
                     Modifier
                         .fillMaxWidth(),
                     horizontalAlignment = Alignment.End,
@@ -352,7 +352,7 @@ fun InfoCard(navn: String,
                                 .fillMaxWidth()
                                 .wrapContentWidth(Alignment.End)
                                 .padding(10.dp),
-                            contentDescription = ("Gult smilefjes, karakter 1")
+                            contentDescription = ("Gult smilefjes, karakter 2")
                         )
                     else if(totalKarakter == "3")
                         Image(
@@ -361,7 +361,7 @@ fun InfoCard(navn: String,
                                 .fillMaxWidth()
                                 .wrapContentWidth(Alignment.End)
                                 .padding(10.dp),
-                            contentDescription = ("Rødt smilefjes, karakter 2")
+                            contentDescription = ("Rødt smilefjes, karakter 3")
                         )
                     // Totalkarakter 4 eller 5 er ikke aktuelt / ikke vurdert, derfor får de ikke smilefjes
                 }
@@ -373,8 +373,7 @@ fun InfoCard(navn: String,
                 horizontalArrangement = Arrangement.Center
             ){
                 UtvidButton(
-                    expanded = expanded,
-                    //onClick = { expanded = !expanded }
+                    expanded = expanded
                 )
             }
             // Utvider kortet og viser detaljert informasjon
@@ -407,13 +406,13 @@ fun InfoCard(navn: String,
 @Composable
 private fun UtvidButton(
     expanded: Boolean,
-    //onClick: () -> Unit,
     modifier: Modifier = Modifier
 ){
     IconButton(
         onClick = { /* expanded = !expanded */ },
         modifier = modifier,
-        enabled = false // Bruker kan trykke hvor som helst på kortet for å utvide
+        enabled = false // Bruker kan trykke hvor som helst på kortet for å utvide, utenom på selve symbolet.
+                        // Trykker man på symbolet skjer det ingenting.
     ) {
         Icon(
             imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
@@ -486,7 +485,7 @@ fun UtvidInfo(
 
 /**
  * Setter i gang API-kallet, sjekker at vi får noe data og printer dataen i logcat
- * Henter en liste med restauranter (**basert på fylke/kommune/søk, vi må sende med noen parametre her etterhvert**)
+ * Henter en liste med restauranter basert på fylke/kommune eller søk)
  * og returnerer denne lista hvis vi har fått tak i data, hvis ikke returneres en tom liste
  */
 suspend fun hentRestauranter(valgtKommune: String?, tekstSøk: String?): List<RestaurantInfo>{
@@ -496,12 +495,10 @@ suspend fun hentRestauranter(valgtKommune: String?, tekstSøk: String?): List<Re
 
         if(valgtKommune == null && tekstSøk == ""){
             // Bruker har trykket søk på restaurant uten å skrive inn restaurant.
-            // Sender man med en tom string i API-kallet vil vi få 44602 restaurant-objekter som svar
+            // Sender man med en tom string i API-kallet vil vi få 44602 (i nov 2023) restaurant-objekter som svar
             // Det klarer ikke appen vår å håndtere, dessuten ville det vært veldig tungvindt å scrolle
             // gjennom 44602 restaurant-kort for å finne den man vil se.
             return emptyList()
-            //svar = RestaurantApi.retrofitService.hentMedSøk(tekstSøk,1)
-
         }
         // I appen er det to muligheter for å se restauranter. Hvis det ikke er den ene så er det den andre
         else if(tekstSøk==null){
@@ -521,21 +518,19 @@ suspend fun hentRestauranter(valgtKommune: String?, tekstSøk: String?): List<Re
         if (svar.isSuccessful) {
             val headers = svar.headers()
             val totalPages = headers["X-Datahotel-Total-Pages"]?.toInt() // Henter antall sider fra API headers (Pagination), parse til Int slik at vi kan bruke tallet i en løkke
-            val totalPosts = headers["X-Datahotel-Total-Posts"]?.toInt() // "Ditt søk ga $totaltPosts resultater" mens man venter på kortene?
+            val totalPosts = headers["X-Datahotel-Total-Posts"]?.toInt() // "Ditt søk ga $totaltPosts resultater" mens man venter på kortene
             val apiSvar = svar.body()
-            //Log.d("Svarsjekk", "Svar isSuccessful")
             if (apiSvar != null) {
                 if(totalPosts == 0){ // Ingen restauranter funnet
                     //antRestauranterTekst = "Restauranter funnet: $totalPosts"
                     Log.d("0 svar", "0 svar")
                 }
-
-                Log.d("Antall svar", "Antall restauranter: $totalPosts")
-                Log.d("HEADERS", " $totalPages")
+                Log.d("Header Posts", "Antall restauranter: $totalPosts")
+                Log.d("Header Pages", "Antall sider: $totalPages")
                 val nyListe = behandleSvar(apiSvar, alleRestauranter)
                 alleRestauranter = nyListe
 
-                // Paginering (?) Dersom det er flere enn 1 side i APIet må vi hente resten av sidene
+                // Paginering. Dersom det er flere enn 1 side i APIet må vi hente resten av sidene
                 if(totalPages != null && totalPages > 1){
                     for(i in 2..totalPages){ // starter på 2 siden vi allerede har hentet page 1
                         var nestePage: Response<ApiResponse>
@@ -571,7 +566,6 @@ suspend fun hentRestauranter(valgtKommune: String?, tekstSøk: String?): List<Re
 fun behandleSvar(apiSvar: ApiResponse, liste: MutableList<RestaurantInfo>): MutableList<RestaurantInfo>{
     var teller = 0
     for (restaurant in apiSvar.entries) {
-        // Mulig vi kan lage en SimpleDateFormat? https://developer.android.com/reference/kotlin/java/text/SimpleDateFormat
         // format på dato fra API: "ddmmyyyy"
         val år: Int = parseInt(restaurant.dato.substring(4))
         val måned: Int = parseInt(restaurant.dato.substring(2,4))
@@ -605,20 +599,12 @@ fun behandleSvar(apiSvar: ApiResponse, liste: MutableList<RestaurantInfo>): Muta
         liste.removeIf{
            it.orgnummer == restaurant.orgnummer && nyttTilsyn
         }
-        if(!nyttTilsyn) {
-            //liste.removeIf { it.orgnummer == restaurant.orgnummer }
-            Log.d("False", "Ikke nytt ${restaurant.dato}")
+        if(!nyttTilsyn) { // Kun for testing
+            //Log.d("!nyttTilsyn = False", "Ikke nytt tilsyn ${restaurant.dato}")
         }
         if(nyttTilsyn) {
             liste.add(restaurant)
-            Log.d("ADD", "Addet orgnr ${restaurant.orgnummer} Dato ${restaurant.dato}")
-        }
-        // Kun for testing, kan fjernes
-        val verdi = liste.any{it.orgnummer == restaurant.orgnummer && nyttTilsyn}
-        if(verdi){
-            teller++
-            Log.d("Funn", "Fant 1 tilfelle av samme orgnr ${restaurant.orgnummer} og DATO: ${restaurant.dato} TELLER: $teller")
-            //nyListe.remove
+            //Log.d("ADD", "Addet orgnr ${restaurant.orgnummer} med dato ${restaurant.dato}")
         }
     }
     return liste
@@ -669,23 +655,3 @@ fun InfoCardPreview(){
             "1")
         }
 }
-/*
-// Får ikke vist restaurant-kortene
-
-@Preview(showBackground = true, widthDp = 750)
-@Composable
-fun RestaurantInfoMediumPreview(){
-    SmilefjesappTheme {
-        RestaurantInfo(Modifier, vinduBredde = WindowWidthSizeClass.Medium, "Fredrikstad" , null)
-    }
-}
-
-@Preview(showBackground = true, widthDp = 1000)
-@Composable
-fun RestaurantInfoExpandedPreview(){
-    SmilefjesappTheme {
-        RestaurantInfo(Modifier, vinduBredde = WindowWidthSizeClass.Expanded, "Fredrikstad" , null)
-    }
-}
-
- */
