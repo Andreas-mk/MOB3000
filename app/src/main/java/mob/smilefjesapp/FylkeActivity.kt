@@ -2,7 +2,6 @@ package mob.smilefjesapp
 
 import android.content.Intent
 import android.os.Bundle
-import android.os.Parcelable
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -47,10 +46,12 @@ import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import androidx.compose.ui.platform.LocalContext
 
 
-
+/**
+ * Fylkeactivity klassen, som er bygd opp på samme måte som alle andre activity med onCreate funksjon
+ * som setter setContent og setter inn informasjonen der
+ */
 class FylkeActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,6 +63,11 @@ class FylkeActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    /**
+                     * Variabler som er mutable slik at det kan endres på, og kaller funksjonen som
+                     * er retrofit api kallet som igjen bruker FylkeApi interface for å gjøre api kall
+                     * Så kaller den FylkeSiden som setter fylkelister inn og viser dette frem
+                     */
                     val fylkeInfoList = remember { mutableStateOf(listOf<FylkeInfo>()) }
                     hentAlleFylker(fylkeInfoList)
                     FylkeSiden(fylkeInfoList.value)
@@ -71,21 +77,36 @@ class FylkeActivity : ComponentActivity() {
         }
     }
 
-// Funksjonen som henter alle fylker via API kall med Retrofit
-// Lager en funksjon BASE_URL som er første del av API, mens resten hentes via FylkeAPI filen og GET request
+/**
+ * Funksjonen som gjør API kall ved hjelp av FylkeApi klassen
+ * Bruker retrofit for å gjøre api kall, og bruker gsonconverter for serialisering av json data til kotlin
+ * objekt. Dette ble også gjort ved hjelp av retrofit tutorial.
+ * https://square.github.io/retrofit/
+ * https://www.youtube.com/watch?v=5gFrXGbQsc8
+ */
     private fun hentAlleFylker(fylkeInfoList: MutableState<List<FylkeInfo>>) {
         val BASE_URL = "https://ws.geonorge.no/"
         val TAG: String = "CHECK_RESPONSE"
 
-    // Her kommer Retrofit i aksjon, og bruker for å bygge en funksjon "api"
-    // Som bruker en .create() som bruker da FylkeAPI klassen til å hente resten av api kallet
+    /**
+     * Dette er sånn retrofit build ser ut, der det bygger en retrofitbuilder,
+     * legger til baseURL som er hoved url til geonorge som er deklarert over
+     * adder en converterfactory
+     * så bygger den.
+     * Så er det å lage, og da lager den ved hjelp av FylkeAPI klassen.
+     */
         val api = Retrofit.Builder()
             .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(FylkeAPI::class.java)
 
-    // Her kommer funksjoner for onResponse og onFailure for å sjekke om den feiler eller blir godkjent
+    /**
+     * Her bruker api variabelen hentFylke() funksjonen somer lagd i fylkeApi
+     * og ved hjelp av å trykke CTRL+SHIFT+SPACEBAR så blir det autogenerert onResponse og onFailure
+     * funksjoner som sjekker om responsen blir successful og hvis den ikke blir det så gir den feilmelding
+     * i logcat i konsollet.
+     */
         api.hentFylke().enqueue(object : Callback<List<FylkeInfo>> {
             override fun onResponse(call: Call<List<FylkeInfo>>, response: Response<List<FylkeInfo>>) {
                 if (response.isSuccessful){
@@ -94,7 +115,10 @@ class FylkeActivity : ComponentActivity() {
                         }
                     }
                 }
-            // Denne gir oss feilmelding og ossen type feilmelding
+
+            /**
+             * Her er feilmeldingen logget hvis det skjer feil
+             */
             override fun onFailure(call: Call<List<FylkeInfo>>, t: Throwable) {
                 Log.i(TAG, "onFailure: ${t.message}")
             }
@@ -104,9 +128,13 @@ class FylkeActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FylkeSiden(fylkeInfoTabell: List<FylkeInfo>, modifier: Modifier = Modifier) {
-    // Rett fra kommunesiden og powerpoint
-    // Her sorterer vi tabellen på navn
+        /**
+         * Funksjonen Fylkesiden er lagd ved hjelp av powerpoint og vi sorterer fylketabellen på nummer
+         * Her blir det lagd Scaffold og setter inn ToppAppBar
+         * Og kaller FylkeListe funksjonen som er den som faktisk får inn alle fylkene ved hjelp av intent
+         * og setter inn sorterFylke som parameteren så det blir sortert.
+         */
+fun FylkeSiden(fylkeInfoTabell: List<FylkeInfo>) {
     val sorterFylke = fylkeInfoTabell.sortedBy{it.fylkesnummer}
 
     Scaffold (topBar = {ToppAppBar()}
@@ -115,16 +143,24 @@ fun FylkeSiden(fylkeInfoTabell: List<FylkeInfo>, modifier: Modifier = Modifier) 
             modifier = Modifier
                 .fillMaxSize()
                 .padding(it),
-                //.background(Color.LightGray),
             horizontalAlignment = Alignment.CenterHorizontally
         )
         {
             FylkeListe(sorterFylke)
         }
+
     }
 }
 
 @Composable
+        /**
+         * Funksjonen fylkeliste som får inn en liste som parameter,
+         * Lager en context som er LocalContext.current for å kjøre intent
+         * Så i Texten så er den clickable så det går an å klikke på de forskjellige fylkene
+         * og det er da intenten lages, og kjører i dette tilfellet "kommuneactivity" for å hente kommunene
+         * Så brukes intent.putExtra for å sette inn key-value for å få riktige objekt, så brukes context for å starte activity.
+         * Ellers er det bare utfylling av padding og farger i Spacer og Divider
+         */
 fun FylkeListe(fylkeInfoTabell: List<FylkeInfo>, modifier: Modifier = Modifier){
     // Rett fra kommuneactivity som er igjen henter fra powerpoint
     val context = LocalContext.current
@@ -140,7 +176,6 @@ fun FylkeListe(fylkeInfoTabell: List<FylkeInfo>, modifier: Modifier = Modifier){
                     .padding(20.dp)
                     .clickable{
                         val intent = Intent(context, KommuneActivity::class.java)
-                        // https://medium.com/the-lazy-coders-journal/easy-parcelable-in-kotlin-the-lazy-coders-way-9683122f4c00
                         intent.putExtra("fylkeInfo",fylke)
                         context.startActivity(intent)
                     }
@@ -167,6 +202,11 @@ fun FylkeListe(fylkeInfoTabell: List<FylkeInfo>, modifier: Modifier = Modifier){
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+        /**
+         * ToppAppBar funksjonen som er sentrert i hovedsiden og alle actvities, her får den "Fylker" overskriften
+         * og bruker themes som vi har egendefinert
+         * Det blir også lagt til icon får å gå tilbake til forrige activity man var på og stopper den man var før man gikk tilbake
+         */
 fun ToppAppBar(modifier: Modifier = Modifier) {
     val localContext = LocalContext.current
 

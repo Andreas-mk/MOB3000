@@ -2,13 +2,18 @@ package mob.smilefjesapp.dataklasse
 
 import android.os.Parcel
 import android.os.Parcelable
-
-// Denne brukes til hvordan json fil fra API ser ut og kan da brukes
+/**
+ * Her er dataklassen for info om Fylker, og inndataen er fylkesnavn og fylkesnummer
+ * Derfor er eneste variabler.
+ * De er her gjort "Parcelable" som gjør at de kan sendes fra activity til activity
+ * Dette gjør det mulig å bruke " intent.putExtra() og sende med key-value internt i activity.
+ * Dette er gjort ved hjelp av
+ * https://medium.com/the-lazy-coders-journal/easy-parcelable-in-kotlin-the-lazy-coders-way-9683122f4c00 hentet den 02/11/2023 - 21.30, Zahidur Rahman Faisal
+ */
 data class FylkeInfo(
     val fylkesnavn: String,
     val fylkesnummer: Int
 ) : Parcelable {
-    // https://medium.com/the-lazy-coders-journal/easy-parcelable-in-kotlin-the-lazy-coders-way-9683122f4c00 11/02/2023 - 21.30
     constructor(parcel: Parcel) : this(
         parcel.readString()!!,
         parcel.readInt()
