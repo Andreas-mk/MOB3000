@@ -173,7 +173,7 @@ class MainActivity : ComponentActivity() {
 // ------------------------
 private fun lyttPåPosisjon(locationManager: LocationManager?, posisjonState: MutableState<Location?>) : LocationListener?
 {
-    val TID = 1000.toLong() // Tid mellom hver GPS avlesning i ms
+    val TID = 10.toLong() // Tid mellom hver GPS avlesning i ms
     val AVSTAND = 0.toFloat() // Minste avstand mellom hver GPS avlesning i meter
 
     val locationProvider = LocationManager.GPS_PROVIDER
@@ -352,42 +352,35 @@ fun Start(
                             .padding(5.dp)
                             .size(270.dp, 65.dp),
                         onClick = {
-                            /* Starter lytting og avslutter lytting
-
+                            /* Starter lytting og avslutter lytting*/
+                            lytterPåGpsState.value=false // funker når denne er plasert her
                             //localContext.startActivity(Intent(localContext, RestaurantInfoActivity::class.java))
-                            if(locationManager != null) {
-                                locationListenerState.value=lyttPåPosisjon(locationManager, minPosisjonState)
-                                lytterPåGpsState.value =  (locationListenerState.value != null)
-                                //delay(2000)
-                                stoppGpsLytting(
-                                    locationManager,
-                                    locationListenerState.value as LocationListener
-                                )
-                                lytterPåGpsState.value=false
+                            if (locationManager!=null) {
+                                if (!lytterPåGpsState.value) {
+                                    // Start lytting på posisjon
+                                    locationListenerState.value=lyttPåPosisjon(locationManager, minPosisjonState)
+                                    lytterPåGpsState.value =  (locationListenerState.value != null)
+                                }
+                                else {
+                                    // Stopp lytting på posisjon
+                                    if (locationListenerState.value != null) {
+                                        stoppGpsLytting(
+                                            locationManager,
+                                            locationListenerState.value as LocationListener
+                                        )
+
+                                    }
+                                }
                             }
-
-                             */
-
-
-
 
                             val minPosisjon = minPosisjonState.value
                             val lat = minPosisjon?.latitude?.toString()
                             val long = minPosisjon?.longitude?.toString()
                             Log.d("O_O", "LAT: $lat LONG: $long")
-                            /* hvor skal kallet på metoden flyttesv
-                            GPS_Demo(
-                                modifier=Modifier,
-                                lokasjonsTillatelserGitt = false,
-                                locationManager = null
-                            )*/
+
 
                             if (lat != null && long != null){
 
-
-                               // intent.putExtra("lat", lat)
-                               // intent.putExtra("long", long)
-                               // gpsContext.startActivity(intent)
                                 coroutineScope.launch(Dispatchers.IO) {
                                     gpsSvar = FylkerOgKommunerApi.retrofitService.foKSammen(lat,long,"4258")
                                     Log.d("før GPS", "$gpsSvar")
@@ -408,37 +401,7 @@ fun Start(
                         }
                     ) {
                         Text(
-                            text = "Søk med GPS",
-                            style = MaterialTheme.typography.headlineMedium
-                        )
-                    }
-                    Button(
-                        modifier = Modifier
-                            .padding(5.dp)
-                            .size(270.dp, 65.dp),
-                        onClick = {
-                            if (locationManager!=null) {
-                                if (!lytterPåGpsState.value) {
-                                    // Start lytting på posisjon
-                                    locationListenerState.value=lyttPåPosisjon(locationManager, minPosisjonState)
-                                    lytterPåGpsState.value =  (locationListenerState.value != null)
-                                }
-                                else {
-                                    // Stopp lytting på posisjon
-                                    if (locationListenerState.value != null) {
-                                        stoppGpsLytting(
-                                            locationManager,
-                                            locationListenerState.value as LocationListener
-                                        )
-                                        lytterPåGpsState.value=false
-                                    }
-                                }
-                            }
-                        },
-                        enabled = (lokasjonsTillatelserGitt)
-                    ) {
-                        Text(
-                            text = "Endre GPS",
+                            text = "Din posisjon",
                             style = MaterialTheme.typography.headlineMedium
                         )
                     }
@@ -506,13 +469,50 @@ fun Start(
                                 .height(65.dp)
                                 .weight(1f),
                             onClick = {
-                                /*localContext.startActivity(
-                                    Intent(localContext, FylkeActivity::class.java) // BYTT UT MED RestaurantInfoActivity og intent
-                                )*/
+                                // Det funker hvis vi legger denne her
+                                lytterPåGpsState.value=false
+                                if (locationManager!=null) {
+                                    if (!lytterPåGpsState.value) {
+                                        // Start lytting på posisjon
+                                        locationListenerState.value=lyttPåPosisjon(locationManager, minPosisjonState)
+                                        lytterPåGpsState.value =  (locationListenerState.value != null)
+                                    }
+                                    else {
+                                        // Stopp lytting på posisjon
+                                        if (locationListenerState.value != null) {
+                                            stoppGpsLytting(
+                                                locationManager,
+                                                locationListenerState.value as LocationListener
+                                            )
 
-                                // Må kanskje lage en aktivitet som på de andre, og lage en klasse som henter posisjonen kanskje?
+                                        }
+                                    }
+                                }
 
-                                //GPS_Demo()
+                                val minPosisjon = minPosisjonState.value
+                                val lat = minPosisjon?.latitude?.toString()
+                                val long = minPosisjon?.longitude?.toString()
+                                Log.d("O_O", "LAT: $lat LONG: $long")
+
+
+                                if (lat != null && long != null){
+
+                                    coroutineScope.launch(Dispatchers.IO) {
+                                        gpsSvar = FylkerOgKommunerApi.retrofitService.foKSammen(lat,long,"4258")
+                                        Log.d("før GPS", "$gpsSvar")
+                                        if (gpsSvar.isSuccessful) {
+                                            val body = gpsSvar.body()!!
+                                            Log.d("GPS SUCCESFYL", "HERJFDGZLZDKHGZE")
+
+                                            val intent = Intent(gpsContext, RestaurantInfoActivity::class.java)
+                                            intent.putExtra("valgtKommune", body.kommunenavn)
+                                            gpsContext.startActivity(intent)
+
+                                        }
+                                    }
+
+                                }
+
                             }
                         ) {
                             Text(
@@ -544,10 +544,6 @@ fun Start(
 }
 
 
-
-fun finnSistePosisjon() {
-    TODO("Not yet implemented")
-}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopAppBar(modifier: Modifier = Modifier){

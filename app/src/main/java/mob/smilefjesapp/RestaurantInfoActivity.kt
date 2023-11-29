@@ -506,10 +506,17 @@ suspend fun hentRestauranter(valgtKommune: String?, tekstSøk: String?): List<Re
         // I appen er det to muligheter for å se restauranter. Hvis det ikke er den ene så er det den andre
         else if(tekstSøk==null){
             // !! = not null assertion operator :
-            svar = RestaurantApi.retrofitService.hentRestauranter(valgtKommune!!,1) // Vi henter alltid page 1 fra APIet først
+            if (valgtKommune != "Midt-Telemark")
+                svar = RestaurantApi.retrofitService.hentRestauranter(valgtKommune!!,1) // Vi henter alltid page 1 fra APIet først
+            else
+                svar = RestaurantApi.retrofitService.hentRestauranter("Bø i telemark",1)
         }
         else {
-            svar = RestaurantApi.retrofitService.hentMedSøk(tekstSøk,1)
+            // Må endre noe MIDT-TELEMARK i hent fra søk
+            if (valgtKommune != "Midt-Telemark")
+                svar = RestaurantApi.retrofitService.hentMedSøk(tekstSøk,1)
+            else
+                svar = RestaurantApi.retrofitService.hentMedSøk("Bø i telemark",1)
         }
         if (svar.isSuccessful) {
             val headers = svar.headers()
