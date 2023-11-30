@@ -64,7 +64,7 @@ import retrofit2.Response
  * Klassen fungerer som en hovedmeny.
  * Henting av posisjon fra GPS håndteres også her.
  * Kilde brukt:
- * Kvisli, J. (2023). Bruke posisjon [Lysbildepresentasjon]. https://itfag.usn.no/~kvisli/MOB3000/leksjoner/L07/Posisjon.pdf
+ * Kvisli, J. (2023). Bruke posisjon [Lysbildepresentasjon]. Universitetet i Sørøst-Norge. https://itfag.usn.no/~kvisli/MOB3000/leksjoner/L07/Posisjon.pdf
  */
 class MainActivity : ComponentActivity() {
     private lateinit var locationManager: LocationManager
