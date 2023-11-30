@@ -49,6 +49,9 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
+/**
+ * Samme som FylkeActivity så er dette onCreate funksjonen og får inn masse deklarerte variabler
+ */
 class KommuneActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,6 +61,12 @@ class KommuneActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    /**
+                     * Variabler for å lage mutable objekt som kan brukes til api kall funksjon
+                     * Lager også her fylekInfo objekt som er FylkeInfo dataklasse som får "intent.getParcelableExtra("fylkeInfo") som får data fra fylkeActivity
+                     * Og lager en variabel som bruker funksjonen som er lagd i KommuneInfo som henter Kommunene inni riktig fylke
+                     * Og kaller da Kommunesiden og som setter variabelen som henter kommunene inni riktig fylke
+                     */
                     val kommuneInfoListe = remember { mutableStateOf(listOf<KommuneInfo>()) }
                     hentAlleKommuner(kommuneInfoListe)
 
@@ -72,24 +81,26 @@ class KommuneActivity : ComponentActivity() {
     }
 }
 
-// Funksjonen som henter inn kommuner via API kall med Retrofit
-// BASE_URL er bare selve nettsiden, også ligger resten av peker til nettside
-// inni KommuneApiService filen, der den peker nøyaktig hvor vi henter data fra
+/**
+ * Funksjon som er helt lik som den i FylkeActivity som bruker BASE_URL til geonorge, bygger retrofit og lager api kall
+ */
 private fun hentAlleKommuner(kommuneInfoList: MutableState<List<KommuneInfo>>) {
     val BASE_URL = "https://ws.geonorge.no/"
     val TAG: String = "CHECK_RESPONSE"
 
-    // Bygger variabel for API ved å bruke Retrofit.Builder()
-    // legger til BaseURL og legger til Gson converter - som er en oversetter
-    // for raw Json data og gjør det om til brukbare kotlin objekter
+    /**
+     * Helt lik som den i FylkeActivity
+     */
     val api = Retrofit.Builder()
         .baseUrl(BASE_URL)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
         .create(KommuneApiService::class.java)
 
-    // Her bruker variablen hentKommune() funksjonen i KommuneApiService og kaller på KommuneInfo
-    // dataklassen. Det er også lagt til funksjoner som sjekker om det blir godkjent eller om det feiler
+    /**
+     * Helt likt som FylkeActivity, bortsett fra at den kaller "hentKommune()" i stedet for "hentFylke()"
+     * Her blir det også logget feilmeldinger hvis det er feil
+     */
     api.hentKommune().enqueue(object : Callback<List<KommuneInfo>> {
         override fun onResponse(call: Call<List<KommuneInfo>>, response: Response<List<KommuneInfo>>) {
             if (response.isSuccessful) {
@@ -106,6 +117,12 @@ private fun hentAlleKommuner(kommuneInfoList: MutableState<List<KommuneInfo>>) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+        /**
+         * Samme som FylkeActivity, får inn tabell som parameter,
+         * Sorterer det som er i parameter og sorterer det på kommunenummer
+         * Bruker Scaffold og lager ToppAppBar igjen,
+         * Og kaller KommuneListe funksjonen for å legge inn den sorterte listen
+         */
 fun KommuneSiden(kommuneInfoTabell: List<KommuneInfo>) {
 
     // Her sorterer vi tabellen på navn
@@ -124,6 +141,11 @@ fun KommuneSiden(kommuneInfoTabell: List<KommuneInfo>) {
 }
 
 @Composable
+        /**
+         * Får liste som innparameter,
+         * Lager kommuneContext for å kjøre LocalContext.current
+         * Gjør teksten også clickable og bruker intent for å hente ritkige restauranter i den valgte kommunen
+         */
 fun KommuneListe(kommuneInfoTabell: List<KommuneInfo>) {
 
     val kommuneContext = LocalContext.current
@@ -135,6 +157,10 @@ fun KommuneListe(kommuneInfoTabell: List<KommuneInfo>) {
                 modifier = Modifier
                     .padding(20.dp)
                     .clickable{
+                        /**
+                         * Her kjører intent RestaurantInfoActivity klassen fordi det er den som lager
+                         * kortene til alle restauranter
+                         */
                       val intent = Intent(kommuneContext, RestaurantInfoActivity::class.java)
                       intent.putExtra("valgtKommune", kommune.kommunenavnNorsk)
                       kommuneContext.startActivity(intent)
@@ -161,6 +187,10 @@ fun KommuneListe(kommuneInfoTabell: List<KommuneInfo>) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+        /**
+         * Her er det igjen ToppAppBar for kommuner siden, som har tittel "Kommuner" og akkurat samme
+         * tilbakeknapp og den slutter activity den går vekk fra.
+         */
 fun TopAppBarKommune(modifier: Modifier = Modifier) {
     val localContext = LocalContext.current
     CenterAlignedTopAppBar(
