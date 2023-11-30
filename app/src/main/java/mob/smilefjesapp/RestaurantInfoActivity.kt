@@ -69,6 +69,9 @@ import java.lang.Integer.parseInt
 
 /**
  * Denne activityen håndterer UIet som vises når bruker skal få presentert smilefjestilsyn fra Mattilsynets API.
+ * Kilder brukt:
+ * Jetpack Compose Progress Indicator. (2023). https://developer.android.com/jetpack/compose/components/progress
+ * Kotlin Collections - List: subList. (n.d.). https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/sub-list.html
  */
 class RestaurantInfoActivity : ComponentActivity() {
 
@@ -111,7 +114,7 @@ fun RestaurantInfo(modifier: Modifier = Modifier, vinduBredde: WindowWidthSizeCl
     Scaffold (topBar = {TopAppBarInfoCard()}
         ) {
         /*
-            Hva brukeren ser kommer an
+            Hva brukeren ser kommer an på enhetens skjermbredde
         */
         when (vinduBredde) {
             WindowWidthSizeClass.Compact -> {
@@ -132,7 +135,6 @@ fun RestaurantInfo(modifier: Modifier = Modifier, vinduBredde: WindowWidthSizeCl
                                 .padding(20.dp)
                         )
                         // Animert loading-ikon som vises mens restauranter hentes
-                        // KILDE: https://developer.android.com/jetpack/compose/components/progress
                         CircularProgressIndicator(
                             modifier = Modifier.width(64.dp),
                             color = MaterialTheme.colorScheme.secondary
@@ -161,7 +163,6 @@ fun RestaurantInfo(modifier: Modifier = Modifier, vinduBredde: WindowWidthSizeCl
                 ) {
                     // 2 kort ved siden av hverandre i hver sin kolonne.
                     // Vi deler lista med alle restauranter i to slik at vi kan bruke LagKort funksjonen.
-                    // Sublist KILDE: https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/sub-list.html
                     val midten = restaurantListe.size/2
                     val delListe1: List<RestaurantInfo> = restaurantListe.subList(0, midten)
                     val delListe2: List<RestaurantInfo> = restaurantListe.subList(midten, restaurantListe.size)
@@ -485,7 +486,7 @@ fun UtvidInfo(
 
 /**
  * Setter i gang API-kallet, sjekker at vi får noe data og printer dataen i logcat
- * Henter en liste med restauranter basert på fylke/kommune eller søk)
+ * Henter en liste med restauranter basert på fylke/kommune eller søk
  * og returnerer denne lista hvis vi har fått tak i data, hvis ikke returneres en tom liste
  */
 suspend fun hentRestauranter(valgtKommune: String?, tekstSøk: String?): List<RestaurantInfo>{
@@ -509,7 +510,9 @@ suspend fun hentRestauranter(valgtKommune: String?, tekstSøk: String?): List<Re
                 svar = RestaurantApi.retrofitService.hentRestauranter("Bø i telemark",1)
         }
         else {
-            // Må endre noe MIDT-TELEMARK i hent fra søk
+            // Et søk på Midt-Telemark vil gi 0 resultater, fordi det ikke finnes et poststed med det navnet.
+            // Dette skjer også for andre kommuner, fordi vi ikke fant noen god måte å konvertere kommuner til
+            // poststed eller postnummer
             if (valgtKommune != "Midt-Telemark")
                 svar = RestaurantApi.retrofitService.hentMedSøk(tekstSøk,1)
             else
@@ -598,9 +601,6 @@ fun behandleSvar(apiSvar: ApiResponse, liste: MutableList<RestaurantInfo>): Muta
         // Fjerner et element fra lista dersom orgnummeret finnes fra før og datosjekken har slått til
         liste.removeIf{
            it.orgnummer == restaurant.orgnummer && nyttTilsyn
-        }
-        if(!nyttTilsyn) { // Kun for testing
-            //Log.d("!nyttTilsyn = False", "Ikke nytt tilsyn ${restaurant.dato}")
         }
         if(nyttTilsyn) {
             liste.add(restaurant)

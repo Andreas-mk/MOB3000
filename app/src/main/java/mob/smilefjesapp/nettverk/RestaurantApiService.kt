@@ -11,9 +11,13 @@ import retrofit2.http.Query
 
 /**
  * Standard Retrofit ApiService oppsett med funksjoner for API kall med poststed og restaurant-navn
+ * Kilder brukt:
+ * Kvisli, J. (2023). Aksessere data via nettet [Lysbildepresentasjon]. https://itfag.usn.no/~kvisli/MOB3000/leksjoner/L06/Aksessere%20data%20via%20nettet.pdf
+ * Kotlinx Serialization Documentation: Ignoring Unknown Keys. (n.d.). https://github.com/Kotlin/kotlinx.serialization/blob/master/docs/json.md#ignoring-unknown-keys
  */
 // Det finnes flere Keys i datasettet vi ikke trenger (feks de samme kategoriene, men på nynorsk), derfor ignorerer vi disse.
-val format = Json {ignoreUnknownKeys = true} // Kilde https://github.com/Kotlin/kotlinx.serialization/blob/master/docs/json.md#ignoring-unknown-keys / https://github.com/Kotlin/kotlinx.serialization/blob/master/guide/example/example-json-03.kt APA 7 ???
+
+val format = Json {ignoreUnknownKeys = true}
 private const val BASE_URL = "https://hotell.difi.no/"
 private val retrofit = Retrofit.Builder()
     .addConverterFactory(format.asConverterFactory("application/json".toMediaType()))
